@@ -67,18 +67,17 @@ services:
       - parentic_network
     entrypoint: sh -c "
       ollama serve &
+      sleep 10 &&
+      ollama pull llama3.2 &&
       sleep 5 &&
-
-      
-      ollama pull llama3 &&
-      ollama run llama3 &
+      echo 'Ollama setup complete' &&
       wait"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/generate"]
+      test: ["CMD", "ollama", "list"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 120s
 
 
     #deploy:

@@ -118,7 +118,7 @@ If no specific child or family context is provided, give general parenting advic
                     json={
                         "model": self.model_name,
                         "prompt": full_prompt,
-                        "stream": False,
+                        "stream": True,
                         "options": {
                             "temperature": 0.7,
                             "top_p": 0.9,

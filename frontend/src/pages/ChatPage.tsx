@@ -12,6 +12,7 @@ import {
   Chip
 } from '@mui/material';
 import { Send, Psychology, Person } from '@mui/icons-material';
+import FormattedMessage from '../components/Common/FormattedMessage';
 
 // TypeScript interfaces
 interface Message {
@@ -182,9 +183,13 @@ const ChatPage: React.FC = () => {
                       color: message.sender === 'user' ? 'white' : 'text.primary',
                     }}
                   >
-                    <Typography variant="body1">
-                      {message.text}
-                    </Typography>
+                    {message.sender === 'ai' ? (
+                      <FormattedMessage text={message.text} variant="body1" />
+                    ) : (
+                      <Typography variant="body1">
+                        {message.text}
+                      </Typography>
+                    )}
                     <Typography 
                       variant="caption" 
                       sx={{ 

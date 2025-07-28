@@ -44,7 +44,7 @@ app.add_middleware(
 
 # Ollama client configuration - use environment variable to connect to containerized Ollama
 OLLAMA_BASE_URL = os.getenv("OLLAMA_URL", "http://host.docker.internal:11434")  # Connect to Ollama via host
-MODEL_NAME = "llama3"
+MODEL_NAME = "llama3.2"
 
 @app.get("/")
 async def root():
