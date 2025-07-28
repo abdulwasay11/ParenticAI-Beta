@@ -1,0 +1,140 @@
+# Removed version as it's obsolete in newer Docker Compose
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: parentic_postgres
+    environment:
+      POSTGRES_DB: parentic_ai
+      POSTGRES_USER: parentic_user
+      POSTGRES_PASSWORD: parentic_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5433:5432"
+    networks:
+      - parentic_network
+
+  # Chroma Vector Database
+  chroma:
+    image: chromadb/chroma:latest
+    container_name: parentic_chroma
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+    networks:
+      - parentic_network
+
+  # Keycloak Authentication
+  keycloak:
+    image: quay.io/keycloak/keycloak:22.0
+    container_name: parentic_keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin123
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/parentic_ai
+      KC_DB_USERNAME: parentic_user
+      KC_DB_PASSWORD: parentic_password
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8080
+      KC_HOSTNAME_STRICT: false
+      KC_HTTP_ENABLED: true
+      
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    command: start-dev
+    networks:
+      - parentic_network
+
+  # Ollama for Local LLM
+  ollama:
+    image: ollama/ollama:latest
+    container_name: parentic_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - parentic_network
+    entrypoint: sh -c "
+      ollama serve &
+      sleep 5 &&
+
+      
+      ollama pull llama3 &&
+      ollama run llama3 &
+      wait"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/generate"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+
+    #deploy:
+    #  resources:
+    #    reservations:
+    #      devices:
+    #        - driver: nvidia
+    #          count: all
+    #          capabilities: [gpu]
+
+  # Backend API
+  backend:
+    build: ./backend
+    container_name: parentic_backend
+    ports:
+      - "8001:8000"
+    environment:
+      - DATABASE_URL=postgresql://parentic_user:parentic_password@postgres:5432/parentic_ai
+      - CHROMA_URL=http://chroma:8000
+      - OLLAMA_URL=http://ollama:11434
+      - KEYCLOAK_URL=http://keycloak:8080
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+    depends_on:
+      - postgres
+      - chroma
+      - keycloak
+      - ollama
+    volumes:
+      - ./backend:/app
+    networks:
+      - parentic_network
+
+  # Frontend React App
+  frontend:
+    build: ./frontend
+    container_name: parentic_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8001
+      - REACT_APP_KEYCLOAK_URL=http://localhost:8080
+      - REACT_APP_KEYCLOAK_REALM=parentic-ai
+      - REACT_APP_KEYCLOAK_CLIENT_ID=parentic-client
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - parentic_network
+
+volumes:
+  postgres_data:
+  chroma_data:
+  ollama_data:
+
+networks:
+  parentic_network:
+    driver: bridge 
