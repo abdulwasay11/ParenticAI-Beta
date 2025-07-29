@@ -28,7 +28,7 @@ import {
   Logout,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuthContext } from '../../App';
+import { useAuth } from '../../contexts/AuthContext';
 
 // TypeScript interfaces
 interface LayoutProps {
@@ -59,7 +59,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuthContext();
+  const { logout } = useAuth();
 
   const handleDrawerToggle = (): void => {
     setMobileOpen(!mobileOpen);

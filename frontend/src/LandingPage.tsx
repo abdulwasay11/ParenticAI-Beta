@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { getApiUrl } from './utils/api';
 import {
   Box,
   Container,
@@ -24,7 +25,8 @@ import {
   Send,
   Person,
 } from '@mui/icons-material';
-import { useAuthContext } from './App';
+import { useAuth } from './contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 // TypeScript interfaces
 interface Feature {
@@ -103,7 +105,8 @@ const BenefitItem: React.FC<BenefitItemProps> = ({ item, index }) => (
 );
 
 const LandingPage: React.FC = () => {
-  const { login } = useAuthContext();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   
   // Chat functionality state
   const [messages, setMessages] = useState<Message[]>([
@@ -151,7 +154,7 @@ const LandingPage: React.FC = () => {
 
     try {
       // Make API call to backend (anonymous - no auth required)
-      const response = await fetch('http://localhost:8001/api/chat', {
+      const response = await fetch(getApiUrl('chat'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -256,7 +259,7 @@ const LandingPage: React.FC = () => {
                   <Button
                     variant="contained"
                     size="large"
-                    onClick={login}
+                    onClick={() => navigate('/login')}
                     sx={{
                       backgroundColor: 'white',
                       color: 'primary.main',
@@ -544,7 +547,7 @@ const LandingPage: React.FC = () => {
                   </Typography>
                   <Button 
                     variant="contained" 
-                    onClick={login}
+                    onClick={() => navigate('/login')}
                     sx={{ 
                       mt: 2,
                       backgroundColor: 'white',
@@ -581,7 +584,7 @@ const LandingPage: React.FC = () => {
           <Button
             variant="contained"
             size="large"
-            onClick={login}
+            onClick={() => navigate('/login')}
             sx={{
               backgroundColor: 'white',
               color: 'primary.main',

@@ -11,7 +11,7 @@
     "@types/react": "^18.2.42",
     "@types/react-dom": "^18.2.17",
     "axios": "^1.6.2",
-    "keycloak-js": "^23.0.1",
+    "firebase": "^10.7.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.1",
@@ -31,7 +31,7 @@
     "@fontsource/inter": "^5.0.15"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "DANGEROUSLY_DISABLE_HOST_CHECK=true react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
@@ -53,6 +53,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "proxy": "http://localhost:8001"
+  }
 } 

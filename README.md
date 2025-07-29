@@ -4,7 +4,7 @@ ParenticAI is a comprehensive web application that provides AI-powered parenting
 
 ## 🚀 Features
 
-- **🔐 Secure Authentication**: Keycloak integration for secure user management
+- **🔐 Secure Authentication**: Firebase Authentication for secure user management
 - **👤 Parent Profiles**: Comprehensive parent profile creation and management
 - **👶 Child Management**: Detailed child profiles with interests, hobbies, and personality traits
 - **🤖 AI Chat Assistant**: Local Llama 3.2 powered conversational AI for parenting advice
@@ -20,7 +20,7 @@ ParenticAI is a comprehensive web application that provides AI-powered parenting
 - **Backend**: FastAPI with Python 3.11
 - **Database**: PostgreSQL 15 for relational data
 - **Vector Database**: ChromaDB for semantic search and chat history
-- **Authentication**: Keycloak for secure user management
+- **Authentication**: Firebase Authentication for secure user management
 - **AI Model**: Ollama with Llama 3.2 for local AI processing
 - **Containerization**: Docker and Docker Compose for easy deployment
 
@@ -33,7 +33,7 @@ ParenticAI is a comprehensive web application that provides AI-powered parenting
 - React Router for navigation
 - React Query for state management
 - Axios for API calls
-- Keycloak-js for authentication
+- Firebase for authentication
 
 #### Backend
 - FastAPI for REST API
@@ -42,7 +42,7 @@ ParenticAI is a comprehensive web application that provides AI-powered parenting
 - ChromaDB for vector operations
 - Ollama integration for local LLM
 - Pydantic for data validation
-- Python-Keycloak for authentication
+- Firebase Admin SDK for authentication
 
 ## 🔧 Prerequisites
 
@@ -73,9 +73,8 @@ This script will:
 
 ### 3. Access the Application
 
-- **Frontend**: http://localhost:3000
+- **Frontend**: http://localhost (served as static files)
 - **Backend API**: http://localhost:8001
-- **Keycloak Admin**: http://localhost:8080 (admin/admin123)
 - **API Documentation**: http://localhost:8001/docs
 
 ## 🔨 Manual Setup
@@ -95,12 +94,11 @@ Wait 2-3 minutes for all services to initialize.
 docker exec -it parentic_ollama ollama pull llama3.2
 ```
 
-### 4. Configure Keycloak
-1. Go to http://localhost:8080
-2. Login with admin/admin123
-3. Create realm "parentic-ai"
-4. Create client "parentic-client"
-5. Configure client settings (see detailed instructions below)
+### 4. Configure Firebase Authentication
+1. Follow the Firebase setup guide in `firebase-setup.md`
+2. Create a Firebase project
+3. Enable Email/Password authentication
+4. Update environment variables in `docker-compose.yml`
 
 ## ⚙️ Configuration
 
@@ -118,43 +116,36 @@ JWT_SECRET=your-super-secret-jwt-key-change-in-production
 KEYCLOAK_CLIENT_SECRET=your-keycloak-client-secret
 ```
 
-#### Frontend `.env`
+#### Frontend Environment Variables
 ```env
 REACT_APP_API_URL=http://localhost:8001
-REACT_APP_KEYCLOAK_URL=http://localhost:8080
-REACT_APP_KEYCLOAK_REALM=parentic-ai
-REACT_APP_KEYCLOAK_CLIENT_ID=parentic-client
+REACT_APP_FIREBASE_API_KEY=your-firebase-api-key
+REACT_APP_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+REACT_APP_FIREBASE_PROJECT_ID=your-project-id
+REACT_APP_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+REACT_APP_FIREBASE_MESSAGING_SENDER_ID=123456789
+REACT_APP_FIREBASE_APP_ID=your-firebase-app-id
 ```
 
-### Keycloak Configuration
+### Firebase Configuration
 
-#### 1. Create Realm
-1. Login to Keycloak admin console
-2. Click "Add realm"
-3. Name: "parentic-ai"
-4. Click "Create"
+For detailed Firebase setup instructions, see `firebase-setup.md`.
 
-#### 2. Create Client
-1. Go to Clients → Create
-2. Client ID: "parentic-client"
-3. Client Protocol: "openid-connect"
-4. Root URL: "http://localhost:3000"
-
-#### 3. Configure Client Settings
-- Access Type: "public"
-- Valid Redirect URIs: "http://localhost:3000/*"
-- Web Origins: "http://localhost:3000"
-- Admin URL: "http://localhost:3000"
+#### Quick Setup Steps:
+1. Create Firebase project at [Firebase Console](https://console.firebase.google.com/)
+2. Enable Email/Password authentication
+3. Create web app and get configuration
+4. Update environment variables in `docker-compose.yml`
+5. Configure Firestore security rules
 
 ## 🐳 Docker Services
 
 | Service | Port | Description |
 |---------|------|-------------|
-| Frontend | 3000 | React application |
+| Frontend | 80 | React static files (nginx) |
 | Backend | 8001 | FastAPI server |
 | PostgreSQL | 5433 | Primary database |
 | ChromaDB | 8000 | Vector database |
-| Keycloak | 8080 | Authentication server |
 | Ollama | 11434 | Local LLM service |
 
 ## 📊 Database Schema
@@ -194,10 +185,48 @@ REACT_APP_KEYCLOAK_CLIENT_ID=parentic-client
 ## 🛠️ Development
 
 ### Frontend Development
+
+#### Development Mode
 ```bash
 cd frontend
 npm install
 npm start
+```
+
+#### Production Build
+The frontend is now configured to build static files for production deployment:
+
+```bash
+cd frontend
+npm install
+npm run build
+```
+
+The built static files will be in the `build/` directory and can be served by any web server.
+
+#### Using Build Scripts
+**Windows:**
+```bash
+cd frontend
+build.bat          # Build static files
+serve-static.bat   # Serve built files locally
+```
+
+**Linux/Mac:**
+```bash
+cd frontend
+chmod +x build.sh serve-static.sh
+./build.sh         # Build static files
+./serve-static.sh  # Serve built files locally
+```
+
+#### Docker Deployment
+The frontend uses a multi-stage Docker build that:
+1. Builds the React app to static files
+2. Serves them with nginx for optimal performance
+
+```bash
+docker-compose up frontend
 ```
 
 ### Backend Development

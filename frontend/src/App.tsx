@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { Box } from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
 
 // Import pages
 import LandingPage from './LandingPage';
@@ -15,21 +15,11 @@ import CommunityPage from './pages/CommunityPage';
 import PersonalityAssessmentPage from './pages/PersonalityAssessmentPage';
 import ChatHistoryPage from './pages/ChatHistoryPage';
 
-// Import layout
+// Import layout and auth
 import Layout from './components/Layout/Layout';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // TypeScript interfaces
-interface AuthContextType {
-  isAuthenticated: boolean;
-  login: () => void;
-  logout: () => void;
-  isLoading: boolean;
-}
-
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
 interface RouteWrapperProps {
   children: ReactNode;
 }
@@ -98,40 +88,25 @@ const theme = createTheme({
   },
 });
 
-// Custom hook for authentication
-const useAuth = (): AuthContextType => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  
-  return {
-    isAuthenticated,
-    login: () => setIsAuthenticated(true),
-    logout: () => setIsAuthenticated(false),
-    isLoading: false,
-  };
-};
 
-// Auth context
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const auth = useAuth();
-  return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
-};
-
-export const useAuthContext = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuthContext must be used within an AuthProvider');
-  }
-  return context;
-};
 
 // Protected route wrapper
 const ProtectedRoute: React.FC<RouteWrapperProps> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuthContext();
+  const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          minHeight: '100vh' 
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
   }
 
   if (!isAuthenticated) {
@@ -143,10 +118,21 @@ const ProtectedRoute: React.FC<RouteWrapperProps> = ({ children }) => {
 
 // Public route wrapper
 const PublicRoute: React.FC<RouteWrapperProps> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuthContext();
+  const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          minHeight: '100vh' 
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
   }
 
   if (isAuthenticated) {

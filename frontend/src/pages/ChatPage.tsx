@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { getApiUrl } from '../utils/api';
 import { 
   Typography, 
   Box, 
@@ -68,7 +69,7 @@ const ChatPage: React.FC = () => {
 
     try {
       // Make real API call to Llama 3 via backend
-      const response = await fetch('http://localhost:8001/api/chat', {
+      const response = await fetch(getApiUrl('chat'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { getApiUrl } from '../utils/api';
 import { 
   Typography, 
   Box, 
@@ -47,7 +48,7 @@ const CommunityPage: React.FC = () => {
 
   const fetchMessages = async (): Promise<void> => {
     try {
-      const response = await fetch('http://localhost:8001/api/community/messages');
+      const response = await fetch(getApiUrl('community/messages'));
       if (response.ok) {
         const data = await response.json();
         setMessages(data);
@@ -65,7 +66,7 @@ const CommunityPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8001/api/community/messages', {
+      const response = await fetch(getApiUrl('community/messages'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
