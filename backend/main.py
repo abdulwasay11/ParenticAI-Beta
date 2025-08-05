@@ -10,9 +10,13 @@ from datetime import datetime
 from typing import List, Optional
 
 from database import SessionLocal, engine
-from models import CommunityMessage
+from models import CommunityMessage, User, Parent, Child
 import models
-from schemas import CommunityMessageCreate, CommunityMessageResponse, ChatMessage, ChatResponse
+from schemas import (
+    CommunityMessageCreate, CommunityMessageResponse, ChatMessage, ChatResponse,
+    UserCreate, UserResponse, ParentCreate, ParentResponse, ChildCreate, ChildResponse,
+    ChildOptionsResponse, CHILD_OPTIONS
+)
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
@@ -210,6 +214,202 @@ async def get_available_models():
                 raise HTTPException(status_code=500, detail="Failed to fetch models from Ollama")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching models: {str(e)}")
+
+# User Management Endpoints
+@app.post("/api/users", response_model=UserResponse)
+async def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    """
+    Create a new user
+    """
+    try:
+        # Check if user already exists
+        existing_user = db.query(User).filter(User.keycloak_id == user.keycloak_id).first()
+        if existing_user:
+            return existing_user
+        
+        db_user = User(
+            keycloak_id=user.keycloak_id,
+            email=user.email,
+            username=user.username,
+            first_name=user.first_name,
+            last_name=user.last_name
+        )
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+    except Exception as e:
+        print(f"Error creating user: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create user")
+
+@app.get("/api/users/{keycloak_id}", response_model=UserResponse)
+async def get_user(keycloak_id: str, db: Session = Depends(get_db)):
+    """
+    Get user by Keycloak ID
+    """
+    user = db.query(User).filter(User.keycloak_id == keycloak_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+# Parent Profile Endpoints
+@app.post("/api/parents", response_model=ParentResponse)
+async def create_parent_profile(parent: ParentCreate, keycloak_id: str, db: Session = Depends(get_db)):
+    """
+    Create or update parent profile
+    """
+    try:
+        # Get user by Keycloak ID
+        user = db.query(User).filter(User.keycloak_id == keycloak_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Check if parent profile already exists
+        existing_parent = db.query(Parent).filter(Parent.user_id == user.id).first()
+        
+        if existing_parent:
+            # Update existing profile
+            for field, value in parent.dict(exclude_unset=True).items():
+                setattr(existing_parent, field, value)
+            db.commit()
+            db.refresh(existing_parent)
+            return existing_parent
+        else:
+            # Create new profile
+            db_parent = Parent(
+                user_id=user.id,
+                **parent.dict()
+            )
+            db.add(db_parent)
+            db.commit()
+            db.refresh(db_parent)
+            return db_parent
+    except Exception as e:
+        print(f"Error creating/updating parent profile: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create/update parent profile")
+
+@app.get("/api/parents/{keycloak_id}", response_model=ParentResponse)
+async def get_parent_profile(keycloak_id: str, db: Session = Depends(get_db)):
+    """
+    Get parent profile by user's Keycloak ID
+    """
+    user = db.query(User).filter(User.keycloak_id == keycloak_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    parent = db.query(Parent).filter(Parent.user_id == user.id).first()
+    if not parent:
+        raise HTTPException(status_code=404, detail="Parent profile not found")
+    
+    return parent
+
+# Children Management Endpoints
+@app.post("/api/children", response_model=ChildResponse)
+async def create_child(child: ChildCreate, keycloak_id: str, db: Session = Depends(get_db)):
+    """
+    Create a new child profile
+    """
+    try:
+        # Get user and parent profile
+        user = db.query(User).filter(User.keycloak_id == keycloak_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        parent = db.query(Parent).filter(Parent.user_id == user.id).first()
+        if not parent:
+            raise HTTPException(status_code=404, detail="Parent profile not found. Please create a parent profile first.")
+        
+        db_child = Child(
+            parent_id=parent.id,
+            **child.dict()
+        )
+        db.add(db_child)
+        db.commit()
+        db.refresh(db_child)
+        return db_child
+    except Exception as e:
+        print(f"Error creating child: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create child")
+
+@app.get("/api/children/{keycloak_id}", response_model=List[ChildResponse])
+async def get_children(keycloak_id: str, db: Session = Depends(get_db)):
+    """
+    Get all children for a user
+    """
+    user = db.query(User).filter(User.keycloak_id == keycloak_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    parent = db.query(Parent).filter(Parent.user_id == user.id).first()
+    if not parent:
+        return []
+    
+    children = db.query(Child).filter(Child.parent_id == parent.id).all()
+    return children
+
+@app.put("/api/children/{child_id}", response_model=ChildResponse)
+async def update_child(child_id: int, child: ChildCreate, keycloak_id: str, db: Session = Depends(get_db)):
+    """
+    Update a child profile
+    """
+    try:
+        # Verify user owns this child
+        user = db.query(User).filter(User.keycloak_id == keycloak_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        parent = db.query(Parent).filter(Parent.user_id == user.id).first()
+        if not parent:
+            raise HTTPException(status_code=404, detail="Parent profile not found")
+        
+        db_child = db.query(Child).filter(Child.id == child_id, Child.parent_id == parent.id).first()
+        if not db_child:
+            raise HTTPException(status_code=404, detail="Child not found")
+        
+        # Update child data
+        for field, value in child.dict(exclude_unset=True).items():
+            setattr(db_child, field, value)
+        
+        db.commit()
+        db.refresh(db_child)
+        return db_child
+    except Exception as e:
+        print(f"Error updating child: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update child")
+
+@app.delete("/api/children/{child_id}")
+async def delete_child(child_id: int, keycloak_id: str, db: Session = Depends(get_db)):
+    """
+    Delete a child profile
+    """
+    try:
+        # Verify user owns this child
+        user = db.query(User).filter(User.keycloak_id == keycloak_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        parent = db.query(Parent).filter(Parent.user_id == user.id).first()
+        if not parent:
+            raise HTTPException(status_code=404, detail="Parent profile not found")
+        
+        db_child = db.query(Child).filter(Child.id == child_id, Child.parent_id == parent.id).first()
+        if not db_child:
+            raise HTTPException(status_code=404, detail="Child not found")
+        
+        db.delete(db_child)
+        db.commit()
+        return {"message": "Child deleted successfully"}
+    except Exception as e:
+        print(f"Error deleting child: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete child")
+
+# Options endpoint for frontend dropdowns
+@app.get("/api/child-options", response_model=ChildOptionsResponse)
+async def get_child_options():
+    """
+    Get predefined options for child profiles
+    """
+    return CHILD_OPTIONS
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000) 

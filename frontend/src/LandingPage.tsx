@@ -27,6 +27,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from './contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import FormattedMessage from './components/Common/FormattedMessage';
 
 // TypeScript interfaces
 interface Feature {
@@ -322,7 +323,7 @@ const LandingPage: React.FC = () => {
       </Box>
 
       {/* Features Section */}
-      <Container maxWidth="lg" sx={{ py: 8 }}>
+      <Container maxWidth="lg" sx={{ py: 8, px: { xs: 2, md: 3 } }}>
         <Box textAlign="center" sx={{ mb: 6 }}>
           <Typography variant="h2" sx={{ mb: 2, fontWeight: 600 }}>
             Everything you need for
@@ -389,7 +390,7 @@ const LandingPage: React.FC = () => {
 
       {/* Try AI Chat Section */}
       <Box id="try-ai-chat" sx={{ backgroundColor: 'grey.50', py: 8 }}>
-        <Container maxWidth="lg">
+        <Container maxWidth="lg" sx={{ px: { xs: 2, md: 3 } }}>
           <Box textAlign="center" sx={{ mb: 6 }}>
             <Typography variant="h2" sx={{ mb: 2, fontWeight: 600 }}>
               Try ParenticAI{' '}
@@ -407,7 +408,7 @@ const LandingPage: React.FC = () => {
           </Box>
 
           <Grid container spacing={4} justifyContent="center">
-            <Grid item xs={12} lg={8}>
+            <Grid item xs={12}>
               {/* Quick Questions */}
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" gutterBottom textAlign="center">
@@ -465,9 +466,13 @@ const LandingPage: React.FC = () => {
                             color: message.sender === 'user' ? 'white' : 'text.primary',
                           }}
                         >
-                          <Typography variant="body1">
-                            {message.text}
-                          </Typography>
+                          {message.sender === 'ai' ? (
+                            <FormattedMessage text={message.text} variant="body1" />
+                          ) : (
+                            <Typography variant="body1">
+                              {message.text}
+                            </Typography>
+                          )}
                           <Typography 
                             variant="caption" 
                             sx={{ 
@@ -574,7 +579,7 @@ const LandingPage: React.FC = () => {
           py: 8,
         }}
       >
-        <Container maxWidth="md" sx={{ textAlign: 'center' }}>
+        <Container maxWidth="md" sx={{ textAlign: 'center', px: { xs: 2, md: 3 } }}>
           <Typography variant="h3" sx={{ mb: 2, fontWeight: 600 }}>
             Ready to transform your parenting journey?
           </Typography>

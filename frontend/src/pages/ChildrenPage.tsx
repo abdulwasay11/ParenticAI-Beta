@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Typography, 
   Box, 
@@ -18,9 +18,13 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  IconButton
+  IconButton,
+  Alert,
+  Snackbar
 } from '@mui/material';
 import { ChildCare, Add, Edit, Delete } from '@mui/icons-material';
+import { useAuth } from '../contexts/AuthContext';
+import { api, Child as BackendChild, ChildOptions } from '../utils/api';
 
 // TypeScript interfaces
 interface Child {
@@ -53,9 +57,19 @@ interface ChildFormData {
 }
 
 const ChildrenPage: React.FC = () => {
-  const [children, setChildren] = useState<Child[]>([]);
+  const { user } = useAuth();
+  const [children, setChildren] = useState<BackendChild[]>([]);
+  const [childOptions, setChildOptions] = useState<ChildOptions | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
-  const [editingChild, setEditingChild] = useState<Child | null>(null);
+  const [editingChild, setEditingChild] = useState<BackendChild | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
+  
   const [formData, setFormData] = useState<ChildFormData>({
     name: '',
     age: '',
@@ -99,6 +113,37 @@ const ChildrenPage: React.FC = () => {
     'College Junior', 'College Senior', 'Graduate'
   ];
 
+  // Load children and options from backend
+  useEffect(() => {
+    const loadData = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        // Load child options
+        const options = await api.getChildOptions();
+        setChildOptions(options);
+        
+        // Load children
+        const childrenData = await api.getChildren(user.id);
+        setChildren(childrenData);
+      } catch (err) {
+        console.error('Error loading children data:', err);
+        setError('Failed to load children data. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user?.id]);
+
+  const showSnackbar = (message: string, severity: 'success' | 'error') => {
+    setSnackbar({ open: true, message, severity });
+  };
+
   const ethnicityOptions: string[] = [
     'African American', 'Asian', 'Caucasian', 'Hispanic/Latino', 'Native American', 
     'Pacific Islander', 'Middle Eastern', 'Mixed/Multiracial', 'Other', 'Prefer not to say'
@@ -122,53 +167,89 @@ const ChildrenPage: React.FC = () => {
     setIsDialogOpen(true);
   };
 
-  const handleEditChild = (child: Child): void => {
+  const handleEditChild = (child: BackendChild): void => {
     setEditingChild(child);
     setFormData({
       name: child.name,
       age: child.age.toString(),
-      gender: child.gender,
-      hobbies: child.hobbies,
-      interests: child.interests,
-      personality: child.personality,
-      schoolGrade: child.schoolGrade,
-      studies: child.studies,
-      ethnicity: child.ethnicity,
-      heightCm: child.heightCm?.toString() || '',
-      weightKg: child.weightKg?.toString() || '',
+      gender: child.gender as 'Male' | 'Female' | 'Other',
+      hobbies: child.hobbies || [],
+      interests: child.interests || [],
+      personality: child.personality_traits || [],
+      schoolGrade: child.school_grade || '',
+      studies: child.studies || [],
+      ethnicity: child.ethnicity || '',
+      heightCm: child.height_cm ? child.height_cm.toString() : '',
+      weightKg: child.weight_kg ? child.weight_kg.toString() : '',
     });
     setIsDialogOpen(true);
   };
 
-  const handleSaveChild = (): void => {
-    if (!formData.name || !formData.age || !formData.gender) return;
-
-    const childData: Child = {
-      id: editingChild?.id || Date.now().toString(),
-      name: formData.name,
-      age: parseInt(formData.age),
-      gender: formData.gender as 'Male' | 'Female' | 'Other',
-      hobbies: formData.hobbies,
-      interests: formData.interests,
-      personality: formData.personality,
-      schoolGrade: formData.schoolGrade,
-      studies: formData.studies,
-      ethnicity: formData.ethnicity,
-      heightCm: formData.heightCm ? parseFloat(formData.heightCm) : null,
-      weightKg: formData.weightKg ? parseFloat(formData.weightKg) : null,
-    };
-
-    if (editingChild) {
-      setChildren((prev: Child[]) => prev.map((child: Child) => child.id === editingChild.id ? childData : child));
-    } else {
-      setChildren((prev: Child[]) => [...prev, childData]);
+  const handleSaveChild = async (): Promise<void> => {
+    if (!formData.name || !formData.age || !formData.gender || !user?.id) {
+      showSnackbar('Please fill in all required fields', 'error');
+      return;
     }
 
-    setIsDialogOpen(false);
+    try {
+      const childData = {
+        name: formData.name,
+        age: parseInt(formData.age),
+        gender: formData.gender as 'Male' | 'Female' | 'Other',
+        hobbies: formData.hobbies,
+        interests: formData.interests,
+        personality_traits: formData.personality,
+        school_grade: formData.schoolGrade,
+        studies: formData.studies,
+        ethnicity: formData.ethnicity,
+        height_cm: formData.heightCm ? parseFloat(formData.heightCm) : undefined,
+        weight_kg: formData.weightKg ? parseFloat(formData.weightKg) : undefined,
+      };
+
+      if (editingChild) {
+        const updatedChild = await api.updateChild(editingChild.id, childData, user.id);
+        setChildren(prev => prev.map(child => 
+          child.id === editingChild.id ? updatedChild : child
+        ));
+        showSnackbar('Child updated successfully!', 'success');
+      } else {
+        const newChild = await api.createChild(childData, user.id);
+        setChildren(prev => [...prev, newChild]);
+        showSnackbar('Child added successfully!', 'success');
+      }
+
+      setIsDialogOpen(false);
+      setEditingChild(null);
+      setFormData({
+        name: '',
+        age: '',
+        gender: '',
+        hobbies: [],
+        interests: [],
+        personality: [],
+        schoolGrade: '',
+        studies: [],
+        ethnicity: '',
+        heightCm: '',
+        weightKg: '',
+      });
+    } catch (error) {
+      console.error('Error saving child:', error);
+      showSnackbar('Failed to save child. Please try again.', 'error');
+    }
   };
 
-  const handleDeleteChild = (childId: string): void => {
-    setChildren(prev => prev.filter(child => child.id !== childId));
+  const handleDeleteChild = async (childId: number): Promise<void> => {
+    if (!user?.id) return;
+    
+    try {
+      await api.deleteChild(childId, user.id);
+      setChildren(prev => prev.filter(child => child.id !== childId));
+      showSnackbar('Child deleted successfully!', 'success');
+    } catch (error) {
+      console.error('Error deleting child:', error);
+      showSnackbar('Failed to delete child. Please try again.', 'error');
+    }
   };
 
   const toggleArrayItem = (array: string[], item: string): string[] => {
@@ -210,7 +291,7 @@ const ChildrenPage: React.FC = () => {
           </Card>
         ) : (
           <Grid container spacing={3}>
-            {children.map((child: Child) => (
+            {children.map((child: BackendChild) => (
               <Grid item xs={12} md={6} lg={4} key={child.id}>
                 <Card>
                   <CardContent>
@@ -247,9 +328,9 @@ const ChildrenPage: React.FC = () => {
                     <Typography variant="body2" color="text.secondary" gutterBottom>
                       {child.age} years old • {child.gender}
                     </Typography>
-                    {child.schoolGrade && (
+                    {child.school_grade && (
                       <Typography variant="body2" color="text.secondary" gutterBottom>
-                        📚 {child.schoolGrade}
+                        📚 {child.school_grade}
                       </Typography>
                     )}
                     {child.ethnicity && (
@@ -257,13 +338,13 @@ const ChildrenPage: React.FC = () => {
                         🌍 {child.ethnicity}
                       </Typography>
                     )}
-                    {(child.heightCm || child.weightKg) && (
+                    {(child.height_cm || child.weight_kg) && (
                       <Typography variant="body2" color="text.secondary" gutterBottom>
-                        📏 {child.heightCm ? `${child.heightCm}cm` : ''}{child.heightCm && child.weightKg ? ' • ' : ''}{child.weightKg ? `${child.weightKg}kg` : ''}
+                        📏 {child.height_cm ? `${child.height_cm}cm` : ''}{child.height_cm && child.weight_kg ? ' • ' : ''}{child.weight_kg ? `${child.weight_kg}kg` : ''}
                       </Typography>
                     )}
 
-                    {child.hobbies.length > 0 && (
+                    {child.hobbies && child.hobbies.length > 0 && (
                       <Box mb={2}>
                         <Typography variant="subtitle2" gutterBottom>
                           Hobbies:
@@ -279,7 +360,7 @@ const ChildrenPage: React.FC = () => {
                       </Box>
                     )}
 
-                    {child.interests.length > 0 && (
+                    {child.interests && child.interests.length > 0 && (
                       <Box mb={2}>
                         <Typography variant="subtitle2" gutterBottom>
                           Interests:
@@ -295,7 +376,7 @@ const ChildrenPage: React.FC = () => {
                       </Box>
                     )}
 
-                    {child.studies.length > 0 && (
+                    {child.studies && child.studies.length > 0 && (
                       <Box>
                         <Typography variant="subtitle2" gutterBottom>
                           Studies:
@@ -511,6 +592,21 @@ const ChildrenPage: React.FC = () => {
             </Button>
           </DialogActions>
         </Dialog>
+        
+        {/* Snackbar for notifications */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        >
+          <Alert 
+            onClose={() => setSnackbar(prev => ({ ...prev, open: false }))} 
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Stack>
     </Box>
   );

@@ -11,6 +11,7 @@ import {
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import axios from 'axios';
+import { api, User as BackendUser } from '../utils/api';
 
 // Types
 interface User {
@@ -133,6 +134,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       };
       
       await setDoc(doc(db, 'users', firebaseUser.uid), userData);
+      
+      // Create user in backend database
+      try {
+        await api.createUser({
+          keycloak_id: firebaseUser.uid, // Using Firebase UID as keycloak_id
+          email: firebaseUser.email || '',
+          username: email.split('@')[0], // Use email prefix as username
+          first_name: firstName,
+          last_name: lastName,
+        });
+      } catch (backendError) {
+        console.error('Failed to create user in backend:', backendError);
+        // Don't throw error here as Firebase auth was successful
+      }
       
       // Note: User will be automatically signed in after successful signup
       // The onAuthStateChanged listener will handle the state update
