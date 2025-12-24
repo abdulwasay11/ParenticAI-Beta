@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { getApiUrl } from './utils/api';
 import {
   Box,
   Container,
@@ -154,27 +153,29 @@ const LandingPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Make API call to backend (anonymous - no auth required)
-      const response = await fetch(getApiUrl('chat'), {
+      // Make API call to Vercel serverless function
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           message: currentMessage,
-          child_context: [] // No context for anonymous users
+          childContext: [] // No context for anonymous users
         })
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
+      const aiText = data.response || 'I apologize, but I couldn\'t generate a response. Please try again.';
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: data.response,
+        text: aiText,
         sender: 'ai',
         timestamp: new Date()
       };

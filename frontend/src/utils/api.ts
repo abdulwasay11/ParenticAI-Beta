@@ -190,14 +190,19 @@ export const api = {
     return response.json();
   },
 
-  // Chat functionality
+  // Chat functionality - using Vercel serverless function as proxy
   async sendChatMessage(message: string, childContext: string[] = []): Promise<{ response: string; timestamp: string }> {
-    const response = await fetch(getApiUrl('chat'), {
+    const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, child_context: childContext }),
+      body: JSON.stringify({ message, childContext }),
     });
-    if (!response.ok) throw new Error('Failed to send chat message');
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Failed to send chat message: ${response.status}`);
+    }
+    
     return response.json();
   },
 }; 

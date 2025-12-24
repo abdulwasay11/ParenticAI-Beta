@@ -1,20 +1,20 @@
 # ParenticAI Frontend
 
-This is the React frontend for ParenticAI, configured to build static files for production deployment.
+This is the React frontend for ParenticAI, configured for deployment on Vercel with DeepSeek API integration.
 
 ## Build Process
 
-The frontend is now configured to build static files that can be served by any web server. The build process:
+The frontend is configured to build static files that are served by Vercel:
 
 1. **Development**: Uses React development server for local development
-2. **Production**: Builds static files optimized for production deployment
+2. **Production**: Builds static files optimized for production deployment on Vercel
 
 ## Quick Start
 
 ### Prerequisites
 
 - Node.js 18+ and npm
-- Docker (for containerized deployment)
+- Vercel account (for deployment)
 
 ### Local Development
 
@@ -25,6 +25,8 @@ npm install
 # Start development server
 npm start
 ```
+
+The app will be available at http://localhost:3000
 
 ### Building for Production
 
@@ -41,103 +43,84 @@ npm run build
 ```bash
 # Build static files
 build.bat
-
-# Serve built files locally
-serve-static.bat
 ```
 
 **Linux/Mac:**
 ```bash
-# Make scripts executable
-chmod +x build.sh serve-static.sh
+# Make script executable
+chmod +x build.sh
 
 # Build static files
 ./build.sh
-
-# Serve built files locally
-./serve-static.sh
 ```
 
-## Docker Deployment
+## Vercel Deployment
 
-The frontend is configured with a multi-stage Docker build:
+This frontend is configured for deployment on Vercel:
 
-1. **Build Stage**: Compiles React app to static files
-2. **Production Stage**: Uses nginx to serve static files
+1. **Static Files**: React app is built to static files served by Vercel
+2. **Serverless Functions**: `/api/chat` function proxies DeepSeek API calls
+3. **Environment Variables**: Set in Vercel dashboard
 
-### Building Docker Image
-
-```bash
-docker build -t parentic-frontend .
-```
-
-### Running with Docker Compose
-
-```bash
-# From project root
-docker-compose up frontend
-```
-
-## Static File Configuration
-
-The built static files are served by nginx with the following optimizations:
-
-- **Gzip compression** for faster loading
-- **Cache headers** for static assets
-- **React Router support** (SPA routing)
-- **Security headers** for production
-- **API proxy** configuration
+See `../VERCEL_DEPLOYMENT_GUIDE.md` for complete deployment instructions.
 
 ## Environment Variables
 
-Configure these environment variables for your deployment:
+### Required for Production (Vercel)
+- `DEEPSEEK_API_KEY`: DeepSeek API key for LLM (set in Vercel dashboard)
 
-- `REACT_APP_API_URL`: Backend API URL
-- `REACT_APP_KEYCLOAK_URL`: Keycloak authentication URL
-- `REACT_APP_KEYCLOAK_REALM`: Keycloak realm name
-- `REACT_APP_KEYCLOAK_CLIENT_ID`: Keycloak client ID
+### For Local Development
+Create a `.env` file in the frontend directory:
+```env
+REACT_APP_DEEPSEEK_API_KEY=your-deepseek-api-key-here
+```
+
+### Firebase Configuration
+Firebase configuration is hardcoded in `src/config/firebase.ts`. For production, you can override with environment variables if needed.
 
 ## File Structure
 
 ```
 frontend/
-├── build/                 # Built static files (generated)
-├── public/               # Static assets
-├── src/                  # React source code
-├── nginx.conf           # Nginx configuration for static serving
-├── Dockerfile           # Multi-stage Docker build
-├── build.sh             # Linux/Mac build script
-├── build.bat            # Windows build script
-├── serve-static.sh      # Linux/Mac serve script
-├── serve-static.bat     # Windows serve script
-└── package.json         # Dependencies and scripts
+├── api/                    # Vercel serverless functions
+│   └── chat.ts            # DeepSeek API proxy
+├── public/                 # Static assets
+├── src/                    # React source code
+│   ├── components/        # React components
+│   ├── config/            # Configuration files
+│   ├── contexts/          # React contexts
+│   ├── hooks/             # Custom React hooks
+│   ├── pages/             # Page components
+│   └── utils/             # Utility functions
+├── vercel.json            # Vercel configuration
+└── package.json           # Dependencies
 ```
 
-## Performance Optimizations
+## Features
 
-The build process includes:
+- React 18 with TypeScript
+- Material-UI for components
+- Firebase Authentication
+- DeepSeek API integration via serverless function
+- React Router for navigation
+- Responsive design
 
-- **Code splitting** for better loading performance
-- **Asset optimization** (minification, compression)
-- **Tree shaking** to remove unused code
-- **Static asset caching** with long-term cache headers
+## Development
 
-## Troubleshooting
+### Running Tests
+```bash
+npm test
+```
 
-### Build Issues
+### Type Checking
+```bash
+# TypeScript will check types during build
+npm run build
+```
 
-1. **Node modules not found**: Run `npm install`
-2. **Build fails**: Check for TypeScript errors in `src/`
-3. **Port conflicts**: Change port in `serve-static` scripts
+## Deployment
 
-### Docker Issues
-
-1. **Build context too large**: Add `.dockerignore` file
-2. **Nginx configuration errors**: Check `nginx.conf` syntax
-3. **Static files not loading**: Verify build output in container
-
-### Runtime Issues
-
-1. **API calls failing**: Check `REACT_APP_API_URL` configuration
-2. **Authentication issues**: Verify Keycloak configuration
-3. **Routing problems**: Ensure nginx is configured for SPA routing 
+Deploy to Vercel using:
+- Vercel CLI: `vercel`
+- GitHub integration: Connect repository in Vercel dashboard
+- See `../VERCEL_DEPLOYMENT_GUIDE.md` for details
