@@ -49,19 +49,25 @@ This is the most important step! Click on **"Environment Variables"** and add th
    - **Environment**: Select all (Production, Preview, Development)
    - **Description**: API key for DeepSeek LLM service
 
-#### Optional: Firebase Environment Variables
+#### Required: Firebase Environment Variables
 
-Your Firebase configuration is already hardcoded in the code, but if you want to use environment variables instead (recommended for production), you can add:
+Firebase configuration is now required via environment variables. You must add these:
 
-- `REACT_APP_FIREBASE_API_KEY`
-- `REACT_APP_FIREBASE_AUTH_DOMAIN`
-- `REACT_APP_FIREBASE_PROJECT_ID`
-- `REACT_APP_FIREBASE_STORAGE_BUCKET`
-- `REACT_APP_FIREBASE_MESSAGING_SENDER_ID`
-- `REACT_APP_FIREBASE_APP_ID`
-- `REACT_APP_FIREBASE_MEASUREMENT_ID`
+**Required Firebase Variables:**
+- `REACT_APP_FIREBASE_API_KEY` - Firebase API Key
+- `REACT_APP_FIREBASE_AUTH_DOMAIN` - Firebase Auth Domain
+- `REACT_APP_FIREBASE_PROJECT_ID` - Firebase Project ID
 
-**Note**: Make sure to add the same variables to all environments (Production, Preview, Development) unless you want different values for each.
+**Optional Firebase Variables (Recommended):**
+- `REACT_APP_FIREBASE_STORAGE_BUCKET` - Firebase Storage Bucket
+- `REACT_APP_FIREBASE_MESSAGING_SENDER_ID` - Firebase Messaging Sender ID
+- `REACT_APP_FIREBASE_APP_ID` - Firebase App ID
+- `REACT_APP_FIREBASE_MEASUREMENT_ID` - Firebase Analytics Measurement ID
+
+**Note**: 
+- All required variables must be set or the app will fail to initialize
+- Make sure to add the same variables to all environments (Production, Preview, Development) unless you want different values for each
+- See `FIREBASE_ENV_VARS.md` for detailed instructions on how to get these values from Firebase Console
 
 ### Step 4: Deploy
 

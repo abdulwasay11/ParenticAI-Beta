@@ -3,16 +3,25 @@ import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getAnalytics, Analytics } from 'firebase/analytics';
 
-// Firebase configuration
+// Firebase configuration from environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyBY8EvZa4Ttwh93RxLftRzGjPeLlGkUTVA",
-  authDomain: "parenticai-auth.firebaseapp.com",
-  projectId: "parenticai-auth",
-  storageBucket: "parenticai-auth.firebasestorage.app",
-  messagingSenderId: "335828509209",
-  appId: "1:335828509209:web:7bd7ceb1cb0afe92780088",
-  measurementId: "G-HJMPS85E4M"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || '',
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || '',
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || '',
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: process.env.REACT_APP_FIREBASE_APP_ID || '',
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID || ''
 };
+
+// Validate that required Firebase config values are present
+if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
+  console.error('Missing required Firebase environment variables. Please set:');
+  console.error('- REACT_APP_FIREBASE_API_KEY');
+  console.error('- REACT_APP_FIREBASE_AUTH_DOMAIN');
+  console.error('- REACT_APP_FIREBASE_PROJECT_ID');
+  throw new Error('Firebase configuration is incomplete. Please set required environment variables.');
+}
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);

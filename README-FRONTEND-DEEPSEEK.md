@@ -71,17 +71,19 @@ See `VERCEL_DEPLOYMENT_GUIDE.md` for complete deployment instructions.
 
 #### Required
 - `REACT_APP_DEEPSEEK_API_KEY`: Your DeepSeek API key (required for AI chat)
+- `REACT_APP_FIREBASE_API_KEY`: Firebase API key (required)
+- `REACT_APP_FIREBASE_AUTH_DOMAIN`: Firebase auth domain (required)
+- `REACT_APP_FIREBASE_PROJECT_ID`: Firebase project ID (required)
 
-#### Optional (Firebase Authentication)
-- `REACT_APP_FIREBASE_API_KEY`: Firebase API key
-- `REACT_APP_FIREBASE_AUTH_DOMAIN`: Firebase auth domain
-- `REACT_APP_FIREBASE_PROJECT_ID`: Firebase project ID
+#### Optional (Firebase - Recommended)
 - `REACT_APP_FIREBASE_STORAGE_BUCKET`: Firebase storage bucket
 - `REACT_APP_FIREBASE_MESSAGING_SENDER_ID`: Firebase messaging sender ID
 - `REACT_APP_FIREBASE_APP_ID`: Firebase app ID
 - `REACT_APP_FIREBASE_MEASUREMENT_ID`: Firebase measurement ID
 
-These should be set in the Vercel dashboard (Settings → Environment Variables) for production deployment.
+All environment variables should be set in the Vercel dashboard (Settings → Environment Variables) for production deployment.
+
+**See `FIREBASE_ENV_VARS.md` for detailed instructions on how to get Firebase configuration values.**
 
 ### Getting a DeepSeek API Key
 

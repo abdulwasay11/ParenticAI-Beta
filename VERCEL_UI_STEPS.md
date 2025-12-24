@@ -27,18 +27,39 @@ This is a quick reference guide for the Vercel UI setup. For detailed instructio
 
 Click **"Environment Variables"** section and add:
 
-### Required Variable
+### Required Variables
+
+#### 1. DeepSeek API Key
 
 | Key | Value | Environments |
 |-----|-------|--------------|
 | `DEEPSEEK_API_KEY` | Your DeepSeek API key (starts with `sk-`) | ✅ Production<br>✅ Preview<br>✅ Development |
 
+#### 2. Firebase Configuration (Required)
+
+| Key | Value | Environments |
+|-----|-------|--------------|
+| `REACT_APP_FIREBASE_API_KEY` | Firebase API Key | ✅ Production<br>✅ Preview<br>✅ Development |
+| `REACT_APP_FIREBASE_AUTH_DOMAIN` | Firebase Auth Domain | ✅ Production<br>✅ Preview<br>✅ Development |
+| `REACT_APP_FIREBASE_PROJECT_ID` | Firebase Project ID | ✅ Production<br>✅ Preview<br>✅ Development |
+
+#### 3. Firebase Configuration (Optional but Recommended)
+
+| Key | Value | Environments |
+|-----|-------|--------------|
+| `REACT_APP_FIREBASE_STORAGE_BUCKET` | Firebase Storage Bucket | ✅ Production<br>✅ Preview<br>✅ Development |
+| `REACT_APP_FIREBASE_MESSAGING_SENDER_ID` | Firebase Messaging Sender ID | ✅ Production<br>✅ Preview<br>✅ Development |
+| `REACT_APP_FIREBASE_APP_ID` | Firebase App ID | ✅ Production<br>✅ Preview<br>✅ Development |
+| `REACT_APP_FIREBASE_MEASUREMENT_ID` | Firebase Analytics Measurement ID | ✅ Production<br>✅ Preview<br>✅ Development |
+
 **How to add:**
-1. Click **"Add"** button
-2. **Key**: `DEEPSEEK_API_KEY`
-3. **Value**: Paste your DeepSeek API key
+1. Click **"Add"** button for each variable
+2. **Key**: The variable name (e.g., `DEEPSEEK_API_KEY`)
+3. **Value**: Paste the actual value
 4. **Environment**: Select all three checkboxes (Production, Preview, Development)
 5. Click **"Save"**
+
+**Note**: See `FIREBASE_ENV_VARS.md` for detailed instructions on how to get Firebase configuration values.
 
 ## Step 4: Deploy
 
