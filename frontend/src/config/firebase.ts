@@ -21,8 +21,15 @@ if (!firebaseConfig.authDomain) missingVars.push('REACT_APP_FIREBASE_AUTH_DOMAIN
 if (!firebaseConfig.projectId) missingVars.push('REACT_APP_FIREBASE_PROJECT_ID');
 if (!firebaseConfig.appId) missingVars.push('REACT_APP_FIREBASE_APP_ID');
 
+// Check if using example/placeholder values
+if (firebaseConfig.appId === '1:123456789:web:abc123def456' || firebaseConfig.appId.includes('123456789')) {
+  console.error('⚠️ WARNING: Firebase App ID appears to be using example/placeholder value.');
+  console.error('Please set REACT_APP_FIREBASE_APP_ID to your actual Firebase App ID from Firebase Console.');
+  missingVars.push('REACT_APP_FIREBASE_APP_ID (currently using placeholder)');
+}
+
 if (missingVars.length > 0) {
-  console.error('Missing required Firebase environment variables. Please set:');
+  console.error('Missing or invalid Firebase environment variables. Please set:');
   missingVars.forEach(varName => console.error(`- ${varName}`));
   throw new Error(`Firebase configuration is incomplete. Missing: ${missingVars.join(', ')}`);
 }
@@ -36,7 +43,10 @@ export const auth: Auth = getAuth(app);
 // Initialize Cloud Firestore and get a reference to the service
 export const db: Firestore = getFirestore(app);
 
-// Initialize Firebase Analytics (only in browser environment)
-export const analytics: Analytics | null = typeof window !== 'undefined' ? getAnalytics(app) : null;
+// Initialize Firebase Analytics (only in browser environment and if measurementId is provided)
+export const analytics: Analytics | null = 
+  typeof window !== 'undefined' && firebaseConfig.measurementId 
+    ? getAnalytics(app) 
+    : null;
 
 export default app; 

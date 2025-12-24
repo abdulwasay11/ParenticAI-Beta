@@ -164,6 +164,7 @@ These features will show errors if accessed. Only the **AI Chat** functionality 
 
 - **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Complete deployment guide for Vercel
 - **[ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md)** - Environment variables setup guide
+- **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** - Troubleshooting common issues
 
 ## 🤝 Contributing
 
