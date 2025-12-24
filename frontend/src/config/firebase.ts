@@ -15,12 +15,16 @@ const firebaseConfig = {
 };
 
 // Validate that required Firebase config values are present
-if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
+const missingVars: string[] = [];
+if (!firebaseConfig.apiKey) missingVars.push('REACT_APP_FIREBASE_API_KEY');
+if (!firebaseConfig.authDomain) missingVars.push('REACT_APP_FIREBASE_AUTH_DOMAIN');
+if (!firebaseConfig.projectId) missingVars.push('REACT_APP_FIREBASE_PROJECT_ID');
+if (!firebaseConfig.appId) missingVars.push('REACT_APP_FIREBASE_APP_ID');
+
+if (missingVars.length > 0) {
   console.error('Missing required Firebase environment variables. Please set:');
-  console.error('- REACT_APP_FIREBASE_API_KEY');
-  console.error('- REACT_APP_FIREBASE_AUTH_DOMAIN');
-  console.error('- REACT_APP_FIREBASE_PROJECT_ID');
-  throw new Error('Firebase configuration is incomplete. Please set required environment variables.');
+  missingVars.forEach(varName => console.error(`- ${varName}`));
+  throw new Error(`Firebase configuration is incomplete. Missing: ${missingVars.join(', ')}`);
 }
 
 // Initialize Firebase

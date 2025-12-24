@@ -1,25 +1,16 @@
-# Vercel Deployment Guide for ParenticAI
+# Vercel Deployment Guide
 
-This guide will walk you through deploying ParenticAI frontend to Vercel with DeepSeek API integration and Firebase authentication.
+This guide will walk you through deploying ParenticAI to Vercel with DeepSeek API integration and Firebase authentication.
 
 ## Prerequisites
 
 1. A Vercel account (sign up at [vercel.com](https://vercel.com))
 2. A DeepSeek API key (get one at [platform.deepseek.com](https://platform.deepseek.com))
-3. A Firebase project (already configured in the code)
+3. A Firebase project (see [Firebase Setup](#firebase-setup) section)
 
-## Step-by-Step Deployment Instructions
+## Quick Setup Steps
 
-### Step 1: Prepare Your Repository
-
-1. Make sure all changes are committed to your repository:
-   ```bash
-   git add .
-   git commit -m "Configure for Vercel deployment"
-   git push origin frontend-deepseek-integration
-   ```
-
-### Step 2: Connect Your Repository to Vercel
+### Step 1: Connect Repository
 
 1. **Log in to Vercel**
    - Go to [vercel.com](https://vercel.com)
@@ -31,43 +22,47 @@ This guide will walk you through deploying ParenticAI frontend to Vercel with De
    - Import your Git repository
    - If your repository isn't listed, click **"Adjust GitHub App Permissions"** and authorize Vercel
 
-3. **Configure the Project**
-   - **Framework Preset**: Vercel should auto-detect "Create React App"
-   - **Root Directory**: Leave as default (or set to `frontend` if deploying from monorepo root)
-   - **Build Command**: `npm run build` (should be auto-detected)
-   - **Output Directory**: `build` (should be auto-detected)
-   - **Install Command**: `npm install` (should be auto-detected)
+### Step 2: Configure Project
+
+- **Framework Preset**: Vercel should auto-detect "Create React App"
+- **Root Directory**: 
+  - If your repository root contains a `frontend` folder, set to `frontend`
+  - If deploying from the frontend folder directly, leave as default
+- **Build Command**: `npm run build` (should be auto-detected)
+- **Output Directory**: `build` (should be auto-detected)
+- **Install Command**: `npm install` (should be auto-detected)
 
 ### Step 3: Configure Environment Variables
 
-This is the most important step! Click on **"Environment Variables"** and add the following:
+Click on **"Environment Variables"** and add the following. See [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md) for detailed instructions.
 
-#### Required Environment Variable
+#### Required Variables
 
 1. **DEEPSEEK_API_KEY**
    - **Value**: Your DeepSeek API key (e.g., `sk-...`)
    - **Environment**: Select all (Production, Preview, Development)
    - **Description**: API key for DeepSeek LLM service
 
-#### Required: Firebase Environment Variables
+2. **Firebase Configuration (Required)**
+   - `REACT_APP_FIREBASE_API_KEY` - Firebase API Key
+   - `REACT_APP_FIREBASE_AUTH_DOMAIN` - Firebase Auth Domain
+   - `REACT_APP_FIREBASE_PROJECT_ID` - Firebase Project ID
+   - `REACT_APP_FIREBASE_APP_ID` - Firebase App ID
+   - **Environment**: Select all (Production, Preview, Development)
 
-Firebase configuration is now required via environment variables. You must add these:
+#### Optional Variables (Recommended)
 
-**Required Firebase Variables:**
-- `REACT_APP_FIREBASE_API_KEY` - Firebase API Key
-- `REACT_APP_FIREBASE_AUTH_DOMAIN` - Firebase Auth Domain
-- `REACT_APP_FIREBASE_PROJECT_ID` - Firebase Project ID
-
-**Optional Firebase Variables (Recommended):**
 - `REACT_APP_FIREBASE_STORAGE_BUCKET` - Firebase Storage Bucket
 - `REACT_APP_FIREBASE_MESSAGING_SENDER_ID` - Firebase Messaging Sender ID
-- `REACT_APP_FIREBASE_APP_ID` - Firebase App ID
 - `REACT_APP_FIREBASE_MEASUREMENT_ID` - Firebase Analytics Measurement ID
+- **Environment**: Select all (Production, Preview, Development)
 
-**Note**: 
-- All required variables must be set or the app will fail to initialize
-- Make sure to add the same variables to all environments (Production, Preview, Development) unless you want different values for each
-- See `FIREBASE_ENV_VARS.md` for detailed instructions on how to get these values from Firebase Console
+**How to add each variable:**
+1. Click **"Add"** button
+2. **Key**: The variable name (e.g., `DEEPSEEK_API_KEY`)
+3. **Value**: Paste the actual value
+4. **Environment**: Select all three checkboxes (Production, Preview, Development)
+5. Click **"Save"**
 
 ### Step 4: Deploy
 
@@ -108,7 +103,82 @@ Firebase configuration is now required via environment variables. You must add t
    - Vercel automatically provisions SSL certificates via Let's Encrypt
    - Your site will be accessible via HTTPS automatically
 
-### Step 6: Verify Deployment
+## Firebase Setup
+
+If you haven't set up Firebase yet, follow these steps:
+
+### 1. Create Firebase Project
+
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Click "Create a project" or "Add project"
+3. Enter project name: `parentic-ai` (or your preferred name)
+4. Enable Google Analytics (optional)
+5. Click "Create project"
+
+### 2. Enable Authentication
+
+1. In your Firebase project, go to "Authentication" in the left sidebar
+2. Click "Get started"
+3. Go to "Sign-in method" tab
+4. Enable "Email/Password" authentication
+5. Click "Save"
+
+### 3. Create Web App
+
+1. In your Firebase project, click the gear icon (⚙️) next to "Project Overview"
+2. Select "Project settings"
+3. Scroll down to "Your apps" section
+4. Click the web icon (`</>`)
+5. Enter app nickname: `parentic-ai-web`
+6. Click "Register app"
+7. Copy the Firebase configuration object
+
+### 4. Get Firebase Configuration Values
+
+The configuration will look like this:
+```javascript
+const firebaseConfig = {
+  apiKey: "your-api-key",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "your-app-id",
+  measurementId: "G-XXXXXXXXXX"
+};
+```
+
+Map these to environment variables (see [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md))
+
+### 5. Set Up Firestore Database (Optional but Recommended)
+
+1. In Firebase Console, go to "Firestore Database"
+2. Click "Create database"
+3. Start in production mode
+4. Choose a location close to your users
+5. Click "Enable"
+
+### 6. Configure Firestore Security Rules
+
+Update Firestore security rules in Firebase Console:
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+```
+
+### 7. Add Authorized Domains
+
+1. Go to Firebase Console → Authentication → Settings → Authorized domains
+2. Add your Vercel domain (e.g., `your-app.vercel.app`)
+3. Add your custom domain if using one
+
+## Verify Deployment
 
 1. **Test the Application**
    - Visit your deployment URL
@@ -167,7 +237,7 @@ Firebase configuration is now required via environment variables. You must add t
 ### Firebase Authentication Not Working
 
 1. **Check Firebase Configuration**
-   - Verify Firebase config in `src/config/firebase.ts`
+   - Verify Firebase config environment variables are set
    - Ensure Firebase project has authentication enabled
    - Check Firebase console for any errors
 
@@ -187,26 +257,6 @@ Firebase configuration is now required via environment variables. You must add t
    - Go to Settings → Domains
    - Verify domain status shows "Valid Configuration"
    - Check for any error messages
-
-## Environment Variables Summary
-
-### Required for Production
-
-| Variable | Description | Where to Get It |
-|----------|-------------|-----------------|
-| `DEEPSEEK_API_KEY` | DeepSeek API key for LLM | [platform.deepseek.com](https://platform.deepseek.com) |
-
-### Already Configured (Hardcoded)
-
-The following Firebase variables are already in the code, but you can override them with environment variables if needed:
-
-- Firebase API Key
-- Firebase Auth Domain
-- Firebase Project ID
-- Firebase Storage Bucket
-- Firebase Messaging Sender ID
-- Firebase App ID
-- Firebase Measurement ID
 
 ## Post-Deployment Checklist
 
@@ -242,15 +292,6 @@ The following Firebase variables are already in the code, but you can override t
 - [Vercel Serverless Functions](https://vercel.com/docs/functions)
 - [DeepSeek API Documentation](https://api-docs.deepseek.com)
 - [Firebase Documentation](https://firebase.google.com/docs)
-
-## Support
-
-If you encounter issues:
-1. Check Vercel deployment logs
-2. Check serverless function logs
-3. Review this guide's troubleshooting section
-4. Check Vercel status page
-5. Contact Vercel support if needed
 
 ---
 

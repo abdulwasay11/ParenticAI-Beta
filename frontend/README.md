@@ -62,7 +62,7 @@ This frontend is configured for deployment on Vercel:
 2. **Serverless Functions**: `/api/chat` function proxies DeepSeek API calls
 3. **Environment Variables**: Set in Vercel dashboard
 
-See `../VERCEL_DEPLOYMENT_GUIDE.md` for complete deployment instructions.
+See `../DEPLOYMENT.md` for complete deployment instructions.
 
 ## Environment Variables
 
@@ -76,7 +76,7 @@ REACT_APP_DEEPSEEK_API_KEY=your-deepseek-api-key-here
 ```
 
 ### Firebase Configuration
-Firebase configuration uses environment variables. See `../FIREBASE_ENV_VARS.md` for complete instructions on setting up Firebase environment variables.
+Firebase configuration uses environment variables. See `../ENVIRONMENT_VARIABLES.md` for complete instructions on setting up Firebase environment variables.
 
 ## File Structure
 
