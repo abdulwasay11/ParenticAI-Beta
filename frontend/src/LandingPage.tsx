@@ -52,32 +52,32 @@ const features: Feature[] = [
   {
     icon: <Psychology />,
     title: 'AI-Powered Guidance',
-    description: 'Get personalized parenting advice from our advanced AI assistant trained on child development expertise.',
+    description: 'Get personalized parenting advice from our advanced AI assistant trained on child development expertise. No signup required to start!',
   },
   {
     icon: <ChildCare />,
-    title: 'Child Profiles',
-    description: 'Create detailed profiles for each child with their interests, personality traits, and development milestones.',
+    title: 'Children Database',
+    description: 'Store your children\'s information for better context. Track their interests, personality traits, development milestones, and more.',
   },
   {
     icon: <Chat />,
     title: 'Smart Conversations',
-    description: 'Have natural conversations with our AI that remembers your family context and provides relevant advice.',
+    description: 'Have natural conversations with our AI that remembers your family context and provides relevant advice based on your children\'s profiles.',
+  },
+  {
+    icon: <TrendingUp />,
+    title: 'Parent Profile Building',
+    description: 'Build your parenting profile over time. Track how good your parenting is, identify your style, and discover areas for improvement.',
+  },
+  {
+    icon: <Psychology />,
+    title: 'Personality Assessment',
+    description: 'AI-powered personality assessment for children using facial features analysis and quizzes. Store and maintain comprehensive child profiles.',
   },
   {
     icon: <Security />,
     title: 'Safe & Secure',
     description: 'Your family data is protected with enterprise-grade security and privacy measures.',
-  },
-  {
-    icon: <TrendingUp />,
-    title: 'Track Progress',
-    description: 'Monitor your parenting journey and your children\'s development with insightful analytics.',
-  },
-  {
-    icon: <Favorite />,
-    title: 'Community Support',
-    description: 'Connect with other parents and share experiences in a supportive, judgment-free environment.',
   },
 ];
 
@@ -254,8 +254,10 @@ const LandingPage: React.FC = () => {
                     lineHeight: 1.4,
                   }}
                 >
-                  Your intelligent parenting companion that provides personalized advice,
-                  tracks your children's development, and supports your parenting journey.
+                  Talk to a ParenticAI Assistant without any signup! Get instant parenting advice right now.
+                  <Box component="span" sx={{ display: 'block', mt: 2, fontSize: '1.1rem' }}>
+                    Sign up to unlock powerful features: children database, parent profile building with progress tracking, and AI-powered personality assessments.
+                  </Box>
                 </Typography>
                 <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
                   <Button
@@ -547,10 +549,20 @@ const LandingPage: React.FC = () => {
               {/* Info Box */}
               <Card sx={{ mt: 3, backgroundColor: 'info.light', color: 'info.contrastText' }}>
                 <Box sx={{ p: 2, textAlign: 'center' }}>
-                  <Typography variant="body2">
-                    💡 <strong>Like what you see?</strong> Sign up for free to save your conversations, 
-                    create child profiles for personalized advice, and access advanced features!
+                  <Typography variant="body2" sx={{ mb: 2 }}>
+                    💡 <strong>Sign up to unlock powerful features:</strong>
                   </Typography>
+                  <Box component="ul" sx={{ textAlign: 'left', maxWidth: 600, mx: 'auto', mb: 2 }}>
+                    <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                      <strong>Children Database:</strong> Store your children's information for better AI context and personalized advice
+                    </Typography>
+                    <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+                      <strong>Parent Profile Building:</strong> Track your parenting progress over time, identify your style, and discover improvement areas
+                    </Typography>
+                    <Typography component="li" variant="body2">
+                      <strong>Personality Assessment:</strong> AI-powered personality analysis using facial features and quizzes to build comprehensive child profiles
+                    </Typography>
+                  </Box>
                   <Button 
                     variant="contained" 
                     onClick={() => navigate('/login')}

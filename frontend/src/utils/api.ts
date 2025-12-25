@@ -8,6 +8,17 @@ export const getApiUrl = (path: string): string => {
   return `${API_BASE}/${path}`;
 };
 
+// Helper to get auth headers
+const getAuthHeaders = (token?: string | null): HeadersInit => {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 // Types for API requests and responses
 export interface User {
   id: number;
@@ -69,24 +80,32 @@ export interface ChildOptions {
 export const api = {
   // User management
   async createUser(userData: {
-    keycloak_id: string;
+    firebase_uid: string;
     email: string;
-    username: string;
+    username?: string;
     first_name?: string;
     last_name?: string;
-  }): Promise<User> {
+  }, token?: string | null): Promise<User> {
     const response = await fetch(getApiUrl('users'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(token),
       body: JSON.stringify(userData),
     });
-    if (!response.ok) throw new Error('Failed to create user');
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to create user');
+    }
     return response.json();
   },
 
-  async getUser(keycloakId: string): Promise<User> {
-    const response = await fetch(getApiUrl(`users/${keycloakId}`));
-    if (!response.ok) throw new Error('Failed to get user');
+  async getUser(firebaseUid: string, token?: string | null): Promise<User> {
+    const response = await fetch(getApiUrl(`users?firebase_uid=${firebaseUid}`), {
+      headers: getAuthHeaders(token),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to get user');
+    }
     return response.json();
   },
 
@@ -99,19 +118,48 @@ export const api = {
     goals?: string;
     experience_level?: string;
     family_structure?: string;
-  }, keycloakId: string): Promise<Parent> {
+  }, firebaseUid: string, token?: string | null): Promise<Parent> {
     const response = await fetch(getApiUrl('parents'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...parentData, keycloak_id: keycloakId }),
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ ...parentData, firebase_uid: firebaseUid }),
     });
-    if (!response.ok) throw new Error('Failed to create parent profile');
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to create parent profile');
+    }
     return response.json();
   },
 
-  async getParentProfile(keycloakId: string): Promise<Parent> {
-    const response = await fetch(getApiUrl(`parents/${keycloakId}`));
-    if (!response.ok) throw new Error('Failed to get parent profile');
+  async getParentProfile(firebaseUid: string, token?: string | null): Promise<Parent> {
+    const response = await fetch(getApiUrl(`parents?firebase_uid=${firebaseUid}`), {
+      headers: getAuthHeaders(token),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to get parent profile');
+    }
+    return response.json();
+  },
+
+  async updateParentProfile(parentData: {
+    age?: number;
+    location?: string;
+    parenting_style?: string;
+    concerns?: string;
+    goals?: string;
+    experience_level?: string;
+    family_structure?: string;
+  }, firebaseUid: string, token?: string | null): Promise<Parent> {
+    const response = await fetch(getApiUrl('parents'), {
+      method: 'PUT',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ ...parentData, firebase_uid: firebaseUid }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to update parent profile');
+    }
     return response.json();
   },
 
@@ -132,19 +180,27 @@ export const api = {
     favorite_activities?: string[];
     challenges?: string;
     achievements?: string;
-  }, keycloakId: string): Promise<Child> {
+  }, firebaseUid: string, token?: string | null): Promise<Child> {
     const response = await fetch(getApiUrl('children'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...childData, keycloak_id: keycloakId }),
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ ...childData, firebase_uid: firebaseUid }),
     });
-    if (!response.ok) throw new Error('Failed to create child');
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to create child');
+    }
     return response.json();
   },
 
-  async getChildren(keycloakId: string): Promise<Child[]> {
-    const response = await fetch(getApiUrl(`children/${keycloakId}`));
-    if (!response.ok) throw new Error('Failed to get children');
+  async getChildren(firebaseUid: string, token?: string | null): Promise<Child[]> {
+    const response = await fetch(getApiUrl(`children?firebase_uid=${firebaseUid}`), {
+      headers: getAuthHeaders(token),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to get children');
+    }
     return response.json();
   },
 
@@ -164,29 +220,104 @@ export const api = {
     favorite_activities?: string[];
     challenges?: string;
     achievements?: string;
-  }, keycloakId: string): Promise<Child> {
-    const response = await fetch(getApiUrl(`children/${childId}`), {
+  }, firebaseUid: string, token?: string | null): Promise<Child> {
+    const response = await fetch(getApiUrl('children'), {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...childData, keycloak_id: keycloakId }),
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ ...childData, child_id: childId, firebase_uid: firebaseUid }),
     });
-    if (!response.ok) throw new Error('Failed to update child');
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to update child');
+    }
     return response.json();
   },
 
-  async deleteChild(childId: number, keycloakId: string): Promise<void> {
-    const response = await fetch(getApiUrl(`children/${childId}`), {
+  async deleteChild(childId: number, firebaseUid: string, token?: string | null): Promise<void> {
+    const response = await fetch(getApiUrl('children'), {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keycloak_id: keycloakId }),
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ child_id: childId, firebase_uid: firebaseUid }),
     });
-    if (!response.ok) throw new Error('Failed to delete child');
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to delete child');
+    }
   },
 
   // Options for dropdowns
   async getChildOptions(): Promise<ChildOptions> {
     const response = await fetch(getApiUrl('child-options'));
     if (!response.ok) throw new Error('Failed to get child options');
+    return response.json();
+  },
+
+  // Personality Assessment
+  async createPersonalityAssessment(assessmentData: {
+    child_id: number;
+    image_url?: string;
+    quiz_data?: any;
+    ai_analysis?: any;
+    traits?: string[];
+    recommendations?: string[];
+    confidence_score?: number;
+  }, firebaseUid: string, token?: string | null): Promise<any> {
+    const response = await fetch(getApiUrl('personality-assessment'), {
+      method: 'POST',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ ...assessmentData, firebase_uid: firebaseUid }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to create personality assessment');
+    }
+    return response.json();
+  },
+
+  async getPersonalityAssessments(firebaseUid: string, childId?: number, token?: string | null): Promise<any[]> {
+    const url = childId 
+      ? getApiUrl(`personality-assessment?firebase_uid=${firebaseUid}&child_id=${childId}`)
+      : getApiUrl(`personality-assessment?firebase_uid=${firebaseUid}`);
+    const response = await fetch(url, {
+      headers: getAuthHeaders(token),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to get personality assessments');
+    }
+    return response.json();
+  },
+
+  // Parent Tracking
+  async recordParentActivity(activityData: {
+    interactions_count?: number;
+    questions_asked?: number;
+    advice_followed?: number;
+    improvement_notes?: string;
+  }, firebaseUid: string, token?: string | null): Promise<any> {
+    const response = await fetch(getApiUrl('parent-tracking'), {
+      method: 'POST',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ ...activityData, firebase_uid: firebaseUid }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to record parent activity');
+    }
+    return response.json();
+  },
+
+  async getParentTracking(firebaseUid: string, days?: number, token?: string | null): Promise<any> {
+    const url = days
+      ? getApiUrl(`parent-tracking?firebase_uid=${firebaseUid}&days=${days}`)
+      : getApiUrl(`parent-tracking?firebase_uid=${firebaseUid}`);
+    const response = await fetch(url, {
+      headers: getAuthHeaders(token),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to get parent tracking');
+    }
     return response.json();
   },
 

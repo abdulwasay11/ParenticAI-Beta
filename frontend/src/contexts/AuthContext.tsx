@@ -137,13 +137,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // Create user in backend database
       try {
+        const idToken = await firebaseUser.getIdToken();
         await api.createUser({
-          keycloak_id: firebaseUser.uid, // Using Firebase UID as keycloak_id
+          firebase_uid: firebaseUser.uid,
           email: firebaseUser.email || '',
           username: email.split('@')[0], // Use email prefix as username
           first_name: firstName,
           last_name: lastName,
-        });
+        }, idToken);
       } catch (backendError) {
         console.error('Failed to create user in backend:', backendError);
         // Don't throw error here as Firebase auth was successful

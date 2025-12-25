@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Typography, 
   Box, 
@@ -9,9 +9,13 @@ import {
   Grid, 
   Avatar,
   Stack,
-  Chip
+  Chip,
+  CircularProgress,
+  Alert
 } from '@mui/material';
 import { Person, Edit, Save } from '@mui/icons-material';
+import { useAuth } from '../contexts/AuthContext';
+import { api } from '../utils/api';
 
 // TypeScript interfaces
 interface ParentProfile {
@@ -22,10 +26,20 @@ interface ParentProfile {
   bio: string;
   parentingStyle: string;
   experience: string;
+  age?: number;
+  location?: string;
+  concerns?: string;
+  goals?: string;
+  family_structure?: string;
+  parenting_score?: number;
 }
 
 const ProfilePage: React.FC = () => {
+  const { user, firebaseUser, token } = useAuth();
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<ParentProfile>({
     firstName: '',
     lastName: '',
@@ -36,6 +50,64 @@ const ProfilePage: React.FC = () => {
     experience: '',
   });
 
+  // Load profile data
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!firebaseUser?.uid || !token) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Get user data
+        const userData = await api.getUser(firebaseUser.uid, token);
+        
+        // Get parent profile
+        try {
+          const parentData = await api.getParentProfile(firebaseUser.uid, token);
+          
+          setProfile({
+            firstName: userData.first_name || '',
+            lastName: userData.last_name || '',
+            email: userData.email || firebaseUser.email || '',
+            phone: '', // Phone not stored in parent profile yet
+            bio: parentData.concerns || '',
+            parentingStyle: parentData.parenting_style || '',
+            experience: parentData.experience_level || '',
+            age: parentData.age,
+            location: parentData.location || '',
+            concerns: parentData.concerns || '',
+            goals: parentData.goals || '',
+            family_structure: parentData.family_structure || '',
+            parenting_score: parentData.parenting_score || 0,
+          });
+        } catch (err) {
+          // Parent profile might not exist yet
+          console.log('Parent profile not found, will create on save');
+          setProfile({
+            firstName: userData.first_name || '',
+            lastName: userData.last_name || '',
+            email: userData.email || firebaseUser.email || '',
+            phone: '',
+            bio: '',
+            parentingStyle: '',
+            experience: '',
+          });
+        }
+      } catch (err: any) {
+        console.error('Error loading profile:', err);
+        setError(err.message || 'Failed to load profile');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, [firebaseUser, token]);
+
   const handleInputChange = (field: keyof ParentProfile) => (
     event: React.ChangeEvent<HTMLInputElement>
   ): void => {
@@ -45,15 +117,56 @@ const ProfilePage: React.FC = () => {
     }));
   };
 
-  const handleSave = (): void => {
-    setIsEditing(false);
-    // TODO: Save to backend
-    console.log('Saving profile:', profile);
+  const handleSave = async (): Promise<void> => {
+    if (!firebaseUser?.uid || !token) {
+      setError('You must be logged in to save your profile');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      setError(null);
+
+      // Update user data
+      await api.createUser({
+        firebase_uid: firebaseUser.uid,
+        email: profile.email,
+        username: profile.email.split('@')[0],
+        first_name: profile.firstName,
+        last_name: profile.lastName,
+      }, token);
+
+      // Update/create parent profile
+      await api.createParentProfile({
+        age: profile.age,
+        location: profile.location,
+        parenting_style: profile.parentingStyle,
+        concerns: profile.bio || profile.concerns,
+        goals: profile.goals,
+        experience_level: profile.experience,
+        family_structure: profile.family_structure,
+      }, firebaseUser.uid, token);
+
+      setIsEditing(false);
+    } catch (err: any) {
+      console.error('Error saving profile:', err);
+      setError(err.message || 'Failed to save profile');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const parentingStyles: string[] = [
     'Authoritative', 'Permissive', 'Authoritarian', 'Uninvolved', 'Positive Parenting'
   ];
+
+  if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -66,10 +179,30 @@ const ProfilePage: React.FC = () => {
             variant={isEditing ? "contained" : "outlined"}
             startIcon={isEditing ? <Save /> : <Edit />}
             onClick={isEditing ? handleSave : () => setIsEditing(true)}
+            disabled={isSaving}
           >
-            {isEditing ? 'Save Profile' : 'Edit Profile'}
+            {isEditing ? (isSaving ? 'Saving...' : 'Save Profile') : 'Edit Profile'}
           </Button>
         </Box>
+
+        {error && (
+          <Alert severity="error" onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        )}
+
+        {profile.parenting_score !== undefined && profile.parenting_score > 0 && (
+          <Card sx={{ backgroundColor: 'primary.light', color: 'primary.contrastText' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Parenting Score: {profile.parenting_score}/100
+              </Typography>
+              <Typography variant="body2">
+                Your parenting progress is tracked over time. Keep engaging with ParenticAI to improve your score!
+              </Typography>
+            </CardContent>
+          </Card>
+        )}
 
         <Grid container spacing={3}>
           <Grid item xs={12} md={4}>
@@ -137,9 +270,20 @@ const ProfilePage: React.FC = () => {
                   <Grid item xs={12} sm={6}>
                     <TextField
                       fullWidth
-                      label="Phone"
-                      value={profile.phone}
-                      onChange={handleInputChange('phone')}
+                      label="Age"
+                      type="number"
+                      value={profile.age || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, age: parseInt(e.target.value) || undefined }))}
+                      disabled={!isEditing}
+                      variant="outlined"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Location"
+                      value={profile.location || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, location: e.target.value }))}
                       disabled={!isEditing}
                       variant="outlined"
                     />
@@ -147,7 +291,7 @@ const ProfilePage: React.FC = () => {
                   <Grid item xs={12}>
                     <TextField
                       fullWidth
-                      label="Bio / About Me"
+                      label="Bio / About Me / Concerns"
                       value={profile.bio}
                       onChange={handleInputChange('bio')}
                       disabled={!isEditing}
@@ -155,6 +299,30 @@ const ProfilePage: React.FC = () => {
                       rows={3}
                       variant="outlined"
                       placeholder="Tell us a bit about yourself and your parenting journey..."
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Goals"
+                      value={profile.goals || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, goals: e.target.value }))}
+                      disabled={!isEditing}
+                      multiline
+                      rows={2}
+                      variant="outlined"
+                      placeholder="What are your parenting goals?"
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Family Structure"
+                      value={profile.family_structure || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, family_structure: e.target.value }))}
+                      disabled={!isEditing}
+                      variant="outlined"
+                      placeholder="e.g., Single parent, Two-parent household, etc."
                     />
                   </Grid>
                 </Grid>

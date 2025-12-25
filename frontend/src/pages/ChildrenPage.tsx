@@ -57,7 +57,7 @@ interface ChildFormData {
 }
 
 const ChildrenPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, firebaseUser, token } = useAuth();
   const [children, setChildren] = useState<BackendChild[]>([]);
   const [childOptions, setChildOptions] = useState<ChildOptions | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
@@ -116,29 +116,41 @@ const ChildrenPage: React.FC = () => {
   // Load children and options from backend
   useEffect(() => {
     const loadData = async () => {
-      if (!user?.id) return;
+      if (!firebaseUser?.uid || !token) return;
       
       try {
         setIsLoading(true);
         setError(null);
         
         // Load child options
-        const options = await api.getChildOptions();
-        setChildOptions(options);
+        try {
+          const options = await api.getChildOptions();
+          setChildOptions(options);
+        } catch (err) {
+          console.warn('Could not load child options:', err);
+          // Use default options if API fails
+          setChildOptions({
+            hobbies: hobbyOptions,
+            interests: interestOptions,
+            personality_traits: personalityOptions,
+            genders: ['Male', 'Female', 'Other'],
+            school_grades: gradeOptions,
+          });
+        }
         
         // Load children
-        const childrenData = await api.getChildren(user.id);
+        const childrenData = await api.getChildren(firebaseUser.uid, token);
         setChildren(childrenData);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error loading children data:', err);
-        setError('Failed to load children data. Please try again.');
+        setError(err.message || 'Failed to load children data. Please try again.');
       } finally {
         setIsLoading(false);
       }
     };
 
     loadData();
-  }, [user?.id]);
+  }, [firebaseUser?.uid, token]);
 
   const showSnackbar = (message: string, severity: 'success' | 'error') => {
     setSnackbar({ open: true, message, severity });
@@ -186,7 +198,7 @@ const ChildrenPage: React.FC = () => {
   };
 
   const handleSaveChild = async (): Promise<void> => {
-    if (!formData.name || !formData.age || !formData.gender || !user?.id) {
+    if (!formData.name || !formData.age || !formData.gender || !firebaseUser?.uid || !token) {
       showSnackbar('Please fill in all required fields', 'error');
       return;
     }
@@ -207,13 +219,13 @@ const ChildrenPage: React.FC = () => {
       };
 
       if (editingChild) {
-        const updatedChild = await api.updateChild(editingChild.id, childData, user.id);
+        const updatedChild = await api.updateChild(editingChild.id, childData, firebaseUser.uid, token);
         setChildren(prev => prev.map(child => 
           child.id === editingChild.id ? updatedChild : child
         ));
         showSnackbar('Child updated successfully!', 'success');
       } else {
-        const newChild = await api.createChild(childData, user.id);
+        const newChild = await api.createChild(childData, firebaseUser.uid, token);
         setChildren(prev => [...prev, newChild]);
         showSnackbar('Child added successfully!', 'success');
       }
@@ -233,22 +245,22 @@ const ChildrenPage: React.FC = () => {
         heightCm: '',
         weightKg: '',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving child:', error);
-      showSnackbar('Failed to save child. Please try again.', 'error');
+      showSnackbar(error.message || 'Failed to save child. Please try again.', 'error');
     }
   };
 
   const handleDeleteChild = async (childId: number): Promise<void> => {
-    if (!user?.id) return;
+    if (!firebaseUser?.uid || !token) return;
     
     try {
-      await api.deleteChild(childId, user.id);
+      await api.deleteChild(childId, firebaseUser.uid, token);
       setChildren(prev => prev.filter(child => child.id !== childId));
       showSnackbar('Child deleted successfully!', 'success');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting child:', error);
-      showSnackbar('Failed to delete child. Please try again.', 'error');
+      showSnackbar(error.message || 'Failed to delete child. Please try again.', 'error');
     }
   };
 
