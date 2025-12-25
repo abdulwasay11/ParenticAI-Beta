@@ -20,7 +20,6 @@ import {
   Chat,
   Security,
   TrendingUp,
-  Favorite,
   Send,
   Person,
 } from '@mui/icons-material';
@@ -105,7 +104,6 @@ const BenefitItem: React.FC<BenefitItemProps> = ({ item, index }) => (
 );
 
 const LandingPage: React.FC = () => {
-  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
   // Chat functionality state

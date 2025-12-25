@@ -22,12 +22,11 @@ const getAuthHeaders = (token?: string | null): HeadersInit => {
 // Types for API requests and responses
 export interface User {
   id: number;
-  keycloak_id: string;
+  firebase_uid: string;
   email: string;
-  username: string;
+  username?: string;
   first_name?: string;
   last_name?: string;
-  is_active: boolean;
   created_at: string;
   updated_at?: string;
 }
@@ -42,6 +41,11 @@ export interface Parent {
   goals?: string;
   experience_level?: string;
   family_structure?: string;
+  parenting_score?: number;
+  improvement_areas?: string[];
+  strengths?: string[];
+  children_count?: number;
+  avg_assessment_score?: number;
   created_at: string;
   updated_at?: string;
 }
