@@ -39,7 +39,12 @@ module.exports = async function handler(request, response) {
       systemPrompt += `\n\nContext about the child(ren): ${childContext.join(', ')}`;
     }
 
-    // Call DeepSeek API
+    // Set headers for streaming response
+    response.setHeader('Content-Type', 'text/event-stream');
+    response.setHeader('Cache-Control', 'no-cache');
+    response.setHeader('Connection', 'keep-alive');
+
+    // Call DeepSeek API with streaming enabled
     const deepseekResponse = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       headers: {
@@ -52,7 +57,7 @@ module.exports = async function handler(request, response) {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: message }
         ],
-        stream: false,
+        stream: true, // Enable streaming
         temperature: 0.7,
         max_tokens: 2000
       })
@@ -61,24 +66,67 @@ module.exports = async function handler(request, response) {
     if (!deepseekResponse.ok) {
       const errorData = await deepseekResponse.json().catch(() => ({}));
       console.error('DeepSeek API error:', errorData);
-      return response.status(deepseekResponse.status).json({ 
-        error: errorData.error?.message || 'Failed to get response from DeepSeek',
-        details: errorData
-      });
+      response.status(deepseekResponse.status);
+      response.write(`data: ${JSON.stringify({ error: errorData.error?.message || 'Failed to get response from DeepSeek' })}\n\n`);
+      response.end();
+      return;
     }
 
-    const data = await deepseekResponse.json();
-    const aiResponse = data.choices?.[0]?.message?.content || 'I apologize, but I couldn\'t generate a response. Please try again.';
-    
-    return response.status(200).json({
-      response: aiResponse,
-      timestamp: new Date().toISOString()
-    });
+    // Stream the response from DeepSeek to the client
+    const reader = deepseekResponse.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) {
+          // Send final message to indicate stream is complete
+          response.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+          response.end();
+          break;
+        }
+
+        // Decode the chunk
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6); // Remove 'data: ' prefix
+            
+            if (data === '[DONE]') {
+              response.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+              response.end();
+              return;
+            }
+
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content;
+              
+              if (content) {
+                // Forward the content chunk to the client
+                response.write(`data: ${JSON.stringify({ chunk: content })}\n\n`);
+              }
+            } catch (e) {
+              // Skip invalid JSON lines
+              continue;
+            }
+          }
+        }
+      }
+    } catch (streamError) {
+      console.error('Error streaming response:', streamError);
+      response.write(`data: ${JSON.stringify({ error: 'Stream error occurred' })}\n\n`);
+      response.end();
+    }
   } catch (error) {
     console.error('Error calling DeepSeek API:', error);
-    return response.status(500).json({ 
-      error: 'Internal server error',
-      message: error.message 
-    });
+    response.status(500);
+    response.write(`data: ${JSON.stringify({ error: 'Internal server error', message: error.message })}\n\n`);
+    response.end();
   }
 };

@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { Send, Psychology, Person } from '@mui/icons-material';
 import FormattedMessage from '../components/Common/FormattedMessage';
+import { api } from '../utils/api';
 
 // TypeScript interfaces
 interface Message {
@@ -66,48 +67,55 @@ const ChatPage: React.FC = () => {
     setInputMessage('');
     setIsLoading(true);
 
+    // Create a placeholder AI message that we'll update as chunks arrive
+    const aiMessageId = (Date.now() + 1).toString();
+    const aiMessage: Message = {
+      id: aiMessageId,
+      text: '',
+      sender: 'ai',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, aiMessage]);
+
     try {
-      // Make API call to Vercel serverless function
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      // Use streaming API
+      await api.sendChatMessageStream(
+        currentMessage,
+        [], // TODO: Add actual child context from profiles
+        (chunk: string) => {
+          // Update the AI message with each chunk
+          setMessages(prev => prev.map(msg => 
+            msg.id === aiMessageId 
+              ? { ...msg, text: msg.text + chunk }
+              : msg
+          ));
         },
-        body: JSON.stringify({
-          message: currentMessage,
-          childContext: [] // TODO: Add actual child context from profiles
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const aiText = data.response || 'I apologize, but I couldn\'t generate a response. Please try again.';
-      
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: aiText,
-        sender: 'ai',
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, aiMessage]);
+        () => {
+          // Stream complete
+          setIsLoading(false);
+        },
+        (error: Error) => {
+          console.error('Error streaming message:', error);
+          setIsLoading(false);
+          
+          // Update the message with error
+          setMessages(prev => prev.map(msg => 
+            msg.id === aiMessageId 
+              ? { ...msg, text: 'Sorry, I encountered an error while processing your request. Please try again.' }
+              : msg
+          ));
+        }
+      );
     } catch (error) {
       console.error('Error sending message to AI:', error);
-      
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: 'Sorry, I encountered an error while processing your request. Please make sure the AI service is running and try again.',
-        sender: 'ai',
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
       setIsLoading(false);
+      
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId 
+          ? { ...msg, text: 'Sorry, I encountered an error while processing your request. Please make sure the AI service is running and try again.' }
+          : msg
+      ));
     }
   };
 

@@ -174,3 +174,4 @@ curl -X POST https://your-domain.vercel.app/api/init-db-endpoint
 - Children must be linked to a parent profile
 - Personality assessments are linked to child profiles
 
+

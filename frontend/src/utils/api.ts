@@ -340,4 +340,76 @@ export const api = {
     
     return response.json();
   },
+
+  // Streaming chat functionality
+  async sendChatMessageStream(
+    message: string, 
+    childContext: string[] = [],
+    onChunk: (chunk: string) => void,
+    onComplete: () => void,
+    onError: (error: Error) => void
+  ): Promise<void> {
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, childContext }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to send chat message: ${response.status}`);
+      }
+
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('Streaming not supported');
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            
+            try {
+              const parsed = JSON.parse(data);
+              
+              if (parsed.error) {
+                onError(new Error(parsed.error));
+                return;
+              }
+              
+              if (parsed.chunk) {
+                onChunk(parsed.chunk);
+              }
+              
+              if (parsed.done) {
+                onComplete();
+                return;
+              }
+            } catch (e) {
+              // Skip invalid JSON
+              continue;
+            }
+          }
+        }
+      }
+      
+      onComplete();
+    } catch (error) {
+      onError(error instanceof Error ? error : new Error('Unknown error'));
+    }
+  },
 }; 

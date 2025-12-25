@@ -26,6 +26,7 @@ import {
 import { useAuth } from './contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import FormattedMessage from './components/Common/FormattedMessage';
+import { api } from './utils/api';
 
 // TypeScript interfaces
 interface Feature {
@@ -150,48 +151,48 @@ const LandingPage: React.FC = () => {
     setInputMessage('');
     setIsLoading(true);
 
+    const aiMessageId = (Date.now() + 1).toString();
+    const aiMessage: Message = {
+      id: aiMessageId,
+      text: '',
+      sender: 'ai',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, aiMessage]);
+
     try {
-      // Make API call to Vercel serverless function
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      await api.sendChatMessageStream(
+        currentMessage,
+        [],
+        (chunk: string) => {
+          setMessages(prev => prev.map(msg => 
+            msg.id === aiMessageId 
+              ? { ...msg, text: msg.text + chunk }
+              : msg
+          ));
         },
-        body: JSON.stringify({
-          message: currentMessage,
-          childContext: [] // No context for anonymous users
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const aiText = data.response || 'I apologize, but I couldn\'t generate a response. Please try again.';
-      
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: aiText,
-        sender: 'ai',
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, aiMessage]);
+        () => {
+          setIsLoading(false);
+        },
+        (error: Error) => {
+          console.error('Error streaming message:', error);
+          setIsLoading(false);
+          setMessages(prev => prev.map(msg => 
+            msg.id === aiMessageId 
+              ? { ...msg, text: 'Sorry, I encountered an error. Please try again in a moment! For the best experience with saved conversations and personalized advice, consider signing up.' }
+              : msg
+          ));
+        }
+      );
     } catch (error) {
       console.error('Error sending message to AI:', error);
-      
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: 'Sorry, I encountered an error. Please try again in a moment! For the best experience with saved conversations and personalized advice, consider signing up.',
-        sender: 'ai',
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
       setIsLoading(false);
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId 
+          ? { ...msg, text: 'Sorry, I encountered an error. Please try again in a moment! For the best experience with saved conversations and personalized advice, consider signing up.' }
+          : msg
+      ));
     }
   };
 
