@@ -1,6 +1,4 @@
 // frontend/api/chat.js
-const { VercelRequest, VercelResponse } = require('@vercel/node');
-
 module.exports = async function handler(request, response) {
   // Set CORS headers
   response.setHeader('Access-Control-Allow-Credentials', 'true');
