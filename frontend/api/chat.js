@@ -1,4 +1,6 @@
 // frontend/api/chat.js
+const { query } = require('./db');
+
 module.exports = async function handler(request, response) {
   // Set CORS headers
   response.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -27,10 +29,28 @@ module.exports = async function handler(request, response) {
   }
 
   try {
-    const { message, childContext = [] } = request.body;
+    const { message, childContext = [], firebase_uid, child_id } = request.body;
 
     if (!message || typeof message !== 'string') {
       return response.status(400).json({ error: 'Message is required and must be a string' });
+    }
+
+    // Get parent_id from firebase_uid if provided (for saving chat history)
+    let parent_id = null;
+    if (firebase_uid) {
+      try {
+        const userResult = await query('SELECT id FROM users WHERE firebase_uid = $1', [firebase_uid]);
+        if (userResult.rows.length > 0) {
+          const userId = userResult.rows[0].id;
+          const parentResult = await query('SELECT id FROM parents WHERE user_id = $1', [userId]);
+          if (parentResult.rows.length > 0) {
+            parent_id = parentResult.rows[0].id;
+          }
+        }
+      } catch (dbError) {
+        console.error('Error fetching parent_id:', dbError);
+        // Continue without saving chat history if DB query fails
+      }
     }
 
     // Build system prompt
@@ -84,6 +104,7 @@ module.exports = async function handler(request, response) {
     const reader = deepseekResponse.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
+    let fullResponse = ''; // Collect full response for saving to database
 
     try {
       while (true) {
@@ -93,6 +114,26 @@ module.exports = async function handler(request, response) {
           // Send final message to indicate stream is complete
           response.write(`data: ${JSON.stringify({ done: true })}\n\n`);
           response.end();
+          
+          // Save chat history to database after streaming completes
+          if (parent_id && fullResponse) {
+            try {
+              await query(
+                `INSERT INTO chat_history (parent_id, child_id, message, response, child_context) 
+                 VALUES ($1, $2, $3, $4, $5)`,
+                [
+                  parent_id,
+                  child_id || null,
+                  message,
+                  fullResponse,
+                  childContext.length > 0 ? childContext : null
+                ]
+              );
+            } catch (saveError) {
+              console.error('Error saving chat history:', saveError);
+              // Don't fail the request if saving history fails
+            }
+          }
           break;
         }
 
@@ -108,6 +149,25 @@ module.exports = async function handler(request, response) {
             if (data === '[DONE]') {
               response.write(`data: ${JSON.stringify({ done: true })}\n\n`);
               response.end();
+              
+              // Save chat history
+              if (parent_id && fullResponse) {
+                try {
+                  await query(
+                    `INSERT INTO chat_history (parent_id, child_id, message, response, child_context) 
+                     VALUES ($1, $2, $3, $4, $5)`,
+                    [
+                      parent_id,
+                      child_id || null,
+                      message,
+                      fullResponse,
+                      childContext.length > 0 ? childContext : null
+                    ]
+                  );
+                } catch (saveError) {
+                  console.error('Error saving chat history:', saveError);
+                }
+              }
               return;
             }
 
@@ -116,6 +176,7 @@ module.exports = async function handler(request, response) {
               const content = parsed.choices?.[0]?.delta?.content;
               
               if (content) {
+                fullResponse += content; // Accumulate full response
                 // Forward the content chunk to the client
                 response.write(`data: ${JSON.stringify({ chunk: content })}\n\n`);
               }

@@ -92,12 +92,28 @@ async function initDatabase() {
       )
     `);
 
+    // Create chat_history table for storing chat messages
+    await query(`
+      CREATE TABLE IF NOT EXISTS chat_history (
+        id SERIAL PRIMARY KEY,
+        parent_id INTEGER REFERENCES parents(id) ON DELETE CASCADE,
+        child_id INTEGER REFERENCES children(id) ON DELETE SET NULL,
+        message TEXT NOT NULL,
+        response TEXT NOT NULL,
+        child_context TEXT[],
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Create indexes for better performance
     await query(`CREATE INDEX IF NOT EXISTS idx_users_firebase_uid ON users(firebase_uid)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_parents_user_id ON parents(user_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_children_parent_id ON children(parent_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_personality_assessments_child_id ON personality_assessments(child_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_parent_tracking_parent_id ON parent_tracking(parent_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_chat_history_parent_id ON chat_history(parent_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_chat_history_child_id ON chat_history(child_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_chat_history_created_at ON chat_history(created_at)`);
 
     console.log('Database initialized successfully');
   } catch (error) {

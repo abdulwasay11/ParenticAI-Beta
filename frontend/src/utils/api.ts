@@ -350,13 +350,20 @@ export const api = {
     childContext: string[] = [],
     onChunk: (chunk: string) => void,
     onComplete: () => void,
-    onError: (error: Error) => void
+    onError: (error: Error) => void,
+    firebaseUid?: string | null,
+    childId?: number | null
   ): Promise<void> {
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, childContext }),
+        body: JSON.stringify({ 
+          message, 
+          childContext,
+          firebase_uid: firebaseUid || null,
+          child_id: childId || null
+        }),
       });
       
       if (!response.ok) {
@@ -414,5 +421,22 @@ export const api = {
     } catch (error) {
       onError(error instanceof Error ? error : new Error('Unknown error'));
     }
+  },
+
+  // Dashboard stats
+  async getDashboardStats(firebaseUid: string, token?: string | null): Promise<{
+    childrenCount: number;
+    chatCount: number;
+    assessmentsCount: number;
+    daysActive: number;
+  }> {
+    const response = await fetch(getApiUrl(`dashboard/stats?firebase_uid=${firebaseUid}`), {
+      headers: getAuthHeaders(token),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to get dashboard stats');
+    }
+    return response.json();
   },
 }; 

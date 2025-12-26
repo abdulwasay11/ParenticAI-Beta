@@ -343,7 +343,9 @@ const ChatPage: React.FC = () => {
               : msg
           ));
           scrollToBottom(true);
-        }
+        },
+        firebaseUser?.uid || null,
+        selectedChild?.id || null
       );
     } catch (error) {
       console.error('Error sending message:', error);
