@@ -58,9 +58,20 @@ module.exports = async function handler(request, response) {
     const childrenResult = await query('SELECT COUNT(*) as count FROM children WHERE parent_id = $1', [parentId]);
     const childrenCount = parseInt(childrenResult.rows[0].count) || 0;
 
-    // Get chat count
-    const chatResult = await query('SELECT COUNT(*) as count FROM chat_history WHERE parent_id = $1', [parentId]);
-    const chatCount = parseInt(chatResult.rows[0].count) || 0;
+    // Get chat count (handle case where table doesn't exist yet)
+    let chatCount = 0;
+    try {
+      const chatResult = await query('SELECT COUNT(*) as count FROM chat_history WHERE parent_id = $1', [parentId]);
+      chatCount = parseInt(chatResult.rows[0].count) || 0;
+    } catch (chatError) {
+      // Table doesn't exist yet - return 0
+      if (chatError.code === '42P01') {
+        console.log('[dashboard/stats.js] chat_history table does not exist yet, returning 0');
+        chatCount = 0;
+      } else {
+        throw chatError;
+      }
+    }
 
     // Get assessments count (personality assessments)
     const assessmentsResult = await query(
@@ -73,21 +84,43 @@ module.exports = async function handler(request, response) {
     const assessmentsCount = parseInt(assessmentsResult.rows[0].count) || 0;
 
     // Get days active (count distinct dates from chat_history or parent_tracking)
-    const daysActiveResult = await query(
-      `SELECT COUNT(DISTINCT DATE(created_at)) as count 
-       FROM chat_history 
-       WHERE parent_id = $1`,
-      [parentId]
-    );
-    const chatDays = parseInt(daysActiveResult.rows[0]?.count || 0);
+    let chatDays = 0;
+    try {
+      const daysActiveResult = await query(
+        `SELECT COUNT(DISTINCT DATE(created_at)) as count 
+         FROM chat_history 
+         WHERE parent_id = $1`,
+        [parentId]
+      );
+      chatDays = parseInt(daysActiveResult.rows[0]?.count || 0);
+    } catch (chatError) {
+      // Table doesn't exist yet - use 0
+      if (chatError.code === '42P01') {
+        console.log('[dashboard/stats.js] chat_history table does not exist yet, using 0 for chat days');
+        chatDays = 0;
+      } else {
+        throw chatError;
+      }
+    }
     
-    const trackingResult = await query(
-      `SELECT COUNT(DISTINCT date) as count 
-       FROM parent_tracking 
-       WHERE parent_id = $1`,
-      [parentId]
-    );
-    const trackingDays = parseInt(trackingResult.rows[0]?.count || 0);
+    let trackingDays = 0;
+    try {
+      const trackingResult = await query(
+        `SELECT COUNT(DISTINCT date) as count 
+         FROM parent_tracking 
+         WHERE parent_id = $1`,
+        [parentId]
+      );
+      trackingDays = parseInt(trackingResult.rows[0]?.count || 0);
+    } catch (trackingError) {
+      // Table doesn't exist yet - use 0
+      if (trackingError.code === '42P01') {
+        console.log('[dashboard/stats.js] parent_tracking table does not exist yet, using 0 for tracking days');
+        trackingDays = 0;
+      } else {
+        throw trackingError;
+      }
+    }
     
     // Get the maximum days active from both sources, minimum 1
     const daysActive = Math.max(chatDays, trackingDays, 1);

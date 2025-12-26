@@ -48,6 +48,7 @@ The database includes the following tables:
 3. **children** - Children profiles with detailed information
 4. **personality_assessments** - AI personality assessment results
 5. **parent_tracking** - Daily tracking of parent interactions and progress
+6. **chat_history** - Chat messages and AI responses for conversation history
 
 ## API Endpoints
 

@@ -130,7 +130,12 @@ module.exports = async function handler(request, response) {
                 ]
               );
             } catch (saveError) {
-              console.error('Error saving chat history:', saveError);
+              // Handle case where table doesn't exist yet
+              if (saveError.code === '42P01') {
+                console.warn('chat_history table does not exist yet. Please run database initialization.');
+              } else {
+                console.error('Error saving chat history:', saveError);
+              }
               // Don't fail the request if saving history fails
             }
           }
@@ -165,7 +170,12 @@ module.exports = async function handler(request, response) {
                     ]
                   );
                 } catch (saveError) {
-                  console.error('Error saving chat history:', saveError);
+                  // Handle case where table doesn't exist yet
+                  if (saveError.code === '42P01') {
+                    console.warn('chat_history table does not exist yet. Please run database initialization.');
+                  } else {
+                    console.error('Error saving chat history:', saveError);
+                  }
                 }
               }
               return;
