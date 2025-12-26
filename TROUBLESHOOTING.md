@@ -4,6 +4,36 @@ This guide helps you resolve common issues when deploying and running ParenticAI
 
 ## Firebase Errors
 
+### auth/unauthorized-domain Error (Google/Phone Authentication)
+
+**Error:**
+```
+Firebase: Error (auth/unauthorized-domain)
+```
+
+**Cause:** The domain where your app is running is not authorized in Firebase Console. This happens when you try to use Google Sign-In or Phone Authentication from a domain that Firebase doesn't recognize.
+
+**Solution:**
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Select your project
+3. Go to **Authentication** → **Settings** (gear icon)
+4. Scroll down to **Authorized domains** section
+5. Click **Add domain**
+6. Add your production domain(s):
+   - `www.parenticai.com` (if using www subdomain)
+   - `parenticai.com` (if using root domain)
+   - Any other domains where your app is hosted
+7. For **local development**, make sure `localhost` is in the list (it should be there by default)
+8. Click **Add** to save
+9. **Important:** Changes may take a few minutes to propagate
+
+**Common Domains to Add:**
+- Production: `www.parenticai.com`, `parenticai.com`
+- Preview/Staging: Your Vercel preview URLs (e.g., `your-app-git-branch.vercel.app`)
+- Local: `localhost` (usually already added)
+
+**Note:** If you're testing on a Vercel preview URL, you may need to add that specific preview domain, or use the wildcard pattern if Firebase supports it.
+
 ### 403 PERMISSION_DENIED: Installations
 
 **Error:**

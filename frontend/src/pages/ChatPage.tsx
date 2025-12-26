@@ -8,7 +8,11 @@ import {
   IconButton,
   Chip,
   Paper,
-  CircularProgress
+  CircularProgress,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import { 
   Send, 
@@ -21,7 +25,8 @@ import {
   Close
 } from '@mui/icons-material';
 import FormattedMessage from '../components/Common/FormattedMessage';
-import { api } from '../utils/api';
+import { api, Child } from '../utils/api';
+import { useAuth } from '../contexts/AuthContext';
 
 // TypeScript interfaces
 interface Message {
@@ -34,6 +39,7 @@ interface Message {
 }
 
 const ChatPage: React.FC = () => {
+  const { firebaseUser, token } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -49,6 +55,11 @@ const ChatPage: React.FC = () => {
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  
+  // Child selection state
+  const [children, setChildren] = useState<Child[]>([]);
+  const [selectedChildId, setSelectedChildId] = useState<string>('generic');
+  const [loadingChildren, setLoadingChildren] = useState<boolean>(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -70,7 +81,7 @@ const ChatPage: React.FC = () => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
     } else {
       setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 50);
     }
   };
@@ -81,6 +92,104 @@ const ChatPage: React.FC = () => {
       scrollToBottom(!streamingMessageId);
     }
   }, [messages, streamingMessageId]);
+
+  // Load children on mount
+  useEffect(() => {
+    const loadChildren = async () => {
+      if (!firebaseUser?.uid || !token) return;
+      
+      try {
+        setLoadingChildren(true);
+        const childrenData = await api.getChildren(firebaseUser.uid, token);
+        setChildren(childrenData);
+        
+        // If no children exist, create a sample child
+        if (childrenData.length === 0) {
+          await createSampleChild();
+        }
+      } catch (error) {
+        console.error('Error loading children:', error);
+      } finally {
+        setLoadingChildren(false);
+      }
+    };
+    
+    loadChildren();
+  }, [firebaseUser, token]);
+
+  // Create sample child for new users (only if no children exist and no sample child already exists)
+  const createSampleChild = async () => {
+    if (!firebaseUser?.uid || !token) return;
+    
+    // Check if a sample child already exists
+    const hasSampleChild = children.some(c => c.name === 'Sample Child');
+    if (hasSampleChild) return;
+    
+    try {
+      const sampleChild = await api.createChild({
+        name: 'Sample Child',
+        age: 5,
+        gender: 'Other',
+        hobbies: ['Reading', 'Drawing'],
+        interests: ['Science', 'Art'],
+        personality_traits: ['Curious', 'Creative'],
+        school_grade: 'Kindergarten',
+      }, firebaseUser.uid, token);
+      
+      setChildren(prev => [...prev, sampleChild]);
+      setSelectedChildId(sampleChild.id.toString());
+    } catch (error) {
+      console.error('Error creating sample child:', error);
+    }
+  };
+
+  // Format child data as context for AI
+  const formatChildContext = (child: Child | null): string[] => {
+    if (!child) return [];
+    
+    const context: string[] = [];
+    context.push(`Child's name: ${child.name}`);
+    context.push(`Age: ${child.age} years old`);
+    context.push(`Gender: ${child.gender}`);
+    
+    if (child.school_grade) {
+      context.push(`School grade: ${child.school_grade}`);
+    }
+    
+    if (child.hobbies && child.hobbies.length > 0) {
+      context.push(`Hobbies: ${child.hobbies.join(', ')}`);
+    }
+    
+    if (child.interests && child.interests.length > 0) {
+      context.push(`Interests: ${child.interests.join(', ')}`);
+    }
+    
+    if (child.personality_traits && child.personality_traits.length > 0) {
+      context.push(`Personality traits: ${child.personality_traits.join(', ')}`);
+    }
+    
+    if (child.favorite_activities && child.favorite_activities.length > 0) {
+      context.push(`Favorite activities: ${child.favorite_activities.join(', ')}`);
+    }
+    
+    if (child.challenges) {
+      context.push(`Challenges: ${child.challenges}`);
+    }
+    
+    if (child.achievements) {
+      context.push(`Achievements: ${child.achievements}`);
+    }
+    
+    if (child.special_needs) {
+      context.push(`Special needs: ${child.special_needs}`);
+    }
+    
+    if (child.studies && child.studies.length > 0) {
+      context.push(`Studies: ${child.studies.join(', ')}`);
+    }
+    
+    return context;
+  };
 
   // Cleanup
   useEffect(() => {
@@ -186,22 +295,28 @@ const ChatPage: React.FC = () => {
 
     // Create a placeholder AI message
     const aiMessageId = (Date.now() + 1).toString();
-    const aiMessage: Message = {
+      const aiMessage: Message = {
       id: aiMessageId,
       text: '',
-      sender: 'ai',
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, aiMessage]);
+        sender: 'ai',
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
     setStreamingMessageId(aiMessageId);
     scrollToBottom(true);
+
+    // Get child context if a child is selected
+    const selectedChild = selectedChildId === 'generic' 
+      ? null 
+      : children.find(c => c.id.toString() === selectedChildId);
+    const childContext = formatChildContext(selectedChild || null);
 
     try {
       // For now, we'll only send text. Image and audio support can be added to API later
       await api.sendChatMessageStream(
         currentMessage || '[Image or audio message]',
-        [],
+        childContext,
         (chunk: string) => {
           setMessages(prev => prev.map(msg => 
             msg.id === aiMessageId 
@@ -266,6 +381,36 @@ const ChatPage: React.FC = () => {
         my: -3, // Remove Container padding
       }}
     >
+      {/* Child Selector - Top Left */}
+      <Box sx={{ p: 2, borderBottom: '1px solid #e5e5e5', backgroundColor: 'white', display: 'flex', alignItems: 'center', gap: 2 }}>
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel id="child-select-label">Chat Context</InputLabel>
+          <Select
+            labelId="child-select-label"
+            id="child-select"
+            value={selectedChildId}
+            label="Chat Context"
+            onChange={(e) => setSelectedChildId(e.target.value)}
+            disabled={loadingChildren}
+          >
+            <MenuItem value="generic">Generic Chat</MenuItem>
+            {children.map((child) => (
+              <MenuItem key={child.id} value={child.id.toString()}>
+                {child.name} ({child.age} years)
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        {selectedChildId !== 'generic' && (() => {
+          const child = children.find(c => c.id.toString() === selectedChildId);
+          return child ? (
+            <Typography variant="body2" color="text.secondary">
+              Chatting about: {child.name}
+        </Typography>
+          ) : null;
+        })()}
+      </Box>
+
       {/* Quick Questions - Only show when no messages or at top */}
       {messages.length <= 1 && (
         <Box sx={{ p: 2, borderBottom: '1px solid #e5e5e5', backgroundColor: 'white' }}>
@@ -296,7 +441,7 @@ const ChatPage: React.FC = () => {
       <Box
         ref={messagesContainerRef}
         sx={{
-          flex: 1,
+            flex: 1, 
           overflowY: 'auto',
           overflowX: 'hidden',
           px: { xs: 1, sm: 2 },
@@ -318,11 +463,11 @@ const ChatPage: React.FC = () => {
       >
         <Box sx={{ maxWidth: '768px', mx: 'auto' }}>
           <Stack spacing={0}>
-            {messages.map((message: Message) => (
-              <Box
-                key={message.id}
-                sx={{
-                  display: 'flex',
+              {messages.map((message: Message) => (
+                <Box 
+                  key={message.id}
+                  sx={{
+                    display: 'flex',
                   gap: 2,
                   py: 3,
                   px: 2,
@@ -356,7 +501,7 @@ const ChatPage: React.FC = () => {
                       {message.images.map((img, idx) => (
                         <Box
                           key={idx}
-                          sx={{
+                    sx={{
                             position: 'relative',
                             maxWidth: '200px',
                             borderRadius: 1,
@@ -387,9 +532,9 @@ const ChatPage: React.FC = () => {
                   {/* Text */}
                   {message.text && (
                     <Box>
-                      {message.sender === 'ai' ? (
-                        <FormattedMessage text={message.text} variant="body1" />
-                      ) : (
+                    {message.sender === 'ai' ? (
+                      <FormattedMessage text={message.text} variant="body1" />
+                    ) : (
                         <Typography
                           variant="body1"
                           sx={{
@@ -398,28 +543,28 @@ const ChatPage: React.FC = () => {
                             lineHeight: 1.75,
                           }}
                         >
-                          {message.text}
-                        </Typography>
-                      )}
+                        {message.text}
+                      </Typography>
+                    )}
                     </Box>
                   )}
 
                   {/* Timestamp */}
-                  <Typography
-                    variant="caption"
-                    sx={{
+                    <Typography 
+                      variant="caption" 
+                      sx={{ 
                       color: 'text.secondary',
                       mt: 0.5,
-                      display: 'block',
+                        display: 'block',
                       fontSize: '0.75rem',
-                    }}
-                  >
+                      }}
+                    >
                     {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </Typography>
+                    </Typography>
                 </Box>
-              </Box>
-            ))}
-
+                </Box>
+              ))}
+              
             {/* Loading indicator */}
             {isLoading && !streamingMessageId && (
               <Box
@@ -439,22 +584,22 @@ const ChatPage: React.FC = () => {
                   }}
                 >
                   <Psychology sx={{ fontSize: 20 }} />
-                </Avatar>
+                  </Avatar>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <CircularProgress size={16} />
                   <Typography variant="body2" color="text.secondary">
                     Thinking...
-                  </Typography>
+                    </Typography>
                 </Box>
-              </Box>
-            )}
-
-            <div ref={messagesEndRef} />
-          </Stack>
+                </Box>
+              )}
+              
+              <div ref={messagesEndRef} />
+            </Stack>
         </Box>
-      </Box>
+          </Box>
 
-      {/* Input Area */}
+          {/* Input Area */}
       <Box
         sx={{
           borderTop: '1px solid #e5e5e5',
@@ -588,10 +733,10 @@ const ChatPage: React.FC = () => {
               )}
 
               {/* Send Button */}
-              <IconButton
+              <IconButton 
                 onClick={handleSendMessage}
                 disabled={(!inputMessage.trim() && selectedImages.length === 0 && !audioBlob) || isLoading}
-                sx={{
+                sx={{ 
                   backgroundColor: (!inputMessage.trim() && selectedImages.length === 0 && !audioBlob) || isLoading
                     ? '#e5e5e5'
                     : '#19c37d',
@@ -630,8 +775,8 @@ const ChatPage: React.FC = () => {
               />
               <Typography variant="caption" color="error">
                 Recording...
-              </Typography>
-            </Box>
+            </Typography>
+          </Box>
           )}
         </Box>
       </Box>
@@ -639,4 +784,4 @@ const ChatPage: React.FC = () => {
   );
 };
 
-export default ChatPage;
+export default ChatPage; 

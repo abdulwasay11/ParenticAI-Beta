@@ -155,6 +155,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           first_name: firstName,
           last_name: lastName,
         }, idToken);
+        
+        // Create a sample child for new users
+        try {
+          await api.createChild({
+            name: 'Sample Child',
+            age: 5,
+            gender: 'Other',
+            hobbies: ['Reading', 'Drawing'],
+            interests: ['Science', 'Art'],
+            personality_traits: ['Curious', 'Creative'],
+            school_grade: 'Kindergarten',
+          }, firebaseUser.uid, idToken);
+        } catch (childError) {
+          console.error('Failed to create sample child:', childError);
+          // Don't throw error here as user creation was successful
+        }
       } catch (backendError) {
         console.error('Failed to create user in backend:', backendError);
         // Don't throw error here as Firebase auth was successful
@@ -202,16 +218,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
           await api.getUser(firebaseUser.uid, idToken);
         } catch (getUserError: any) {
-          // User doesn't exist, create them
-          if (getUserError.message.includes('not found') || getUserError.message.includes('404')) {
-            await api.createUser({
-              firebase_uid: firebaseUser.uid,
-              email: firebaseUser.email || '',
-              username: firebaseUser.email?.split('@')[0] || '',
-              first_name: firstName,
-              last_name: lastName,
-            }, idToken);
+        // User doesn't exist, create them
+        if (getUserError.message.includes('not found') || getUserError.message.includes('404')) {
+          await api.createUser({
+            firebase_uid: firebaseUser.uid,
+            email: firebaseUser.email || '',
+            username: firebaseUser.email?.split('@')[0] || '',
+            first_name: firstName,
+            last_name: lastName,
+          }, idToken);
+          
+          // Create a sample child for new users
+          try {
+            await api.createChild({
+              name: 'Sample Child',
+              age: 5,
+              gender: 'Other',
+              hobbies: ['Reading', 'Drawing'],
+              interests: ['Science', 'Art'],
+              personality_traits: ['Curious', 'Creative'],
+              school_grade: 'Kindergarten',
+            }, firebaseUser.uid, idToken);
+          } catch (childError) {
+            console.error('Failed to create sample child:', childError);
           }
+        }
         }
       } catch (backendError) {
         console.error('Failed to create user in backend:', backendError);
@@ -243,16 +274,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
           await api.getUser(firebaseUser.uid, idToken);
         } catch (getUserError: any) {
-          // User doesn't exist, create them
-          if (getUserError.message.includes('not found') || getUserError.message.includes('404')) {
-            await api.createUser({
-              firebase_uid: firebaseUser.uid,
-              email: firebaseUser.email || firebaseUser.phoneNumber || '',
-              username: firebaseUser.phoneNumber?.replace(/[^0-9]/g, '') || '',
-              first_name: '',
-              last_name: '',
-            }, idToken);
+        // User doesn't exist, create them
+        if (getUserError.message.includes('not found') || getUserError.message.includes('404')) {
+          await api.createUser({
+            firebase_uid: firebaseUser.uid,
+            email: firebaseUser.email || firebaseUser.phoneNumber || '',
+            username: firebaseUser.phoneNumber?.replace(/[^0-9]/g, '') || '',
+            first_name: '',
+            last_name: '',
+          }, idToken);
+          
+          // Create a sample child for new users
+          try {
+            await api.createChild({
+              name: 'Sample Child',
+              age: 5,
+              gender: 'Other',
+              hobbies: ['Reading', 'Drawing'],
+              interests: ['Science', 'Art'],
+              personality_traits: ['Curious', 'Creative'],
+              school_grade: 'Kindergarten',
+            }, firebaseUser.uid, idToken);
+          } catch (childError) {
+            console.error('Failed to create sample child:', childError);
           }
+        }
         }
       } catch (backendError) {
         console.error('Failed to create user in backend:', backendError);
