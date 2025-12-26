@@ -6,7 +6,14 @@ import {
   signOut,
   onAuthStateChanged,
   sendPasswordResetEmail,
-  updateProfile
+  updateProfile,
+  signInWithPopup,
+  GoogleAuthProvider,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  PhoneAuthProvider,
+  signInWithCredential,
+  ConfirmationResult
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
@@ -30,6 +37,9 @@ interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  sendPhoneVerificationCode: (phoneNumber: string, recaptchaVerifier: RecaptchaVerifier) => Promise<ConfirmationResult>;
+  verifyPhoneCode: (confirmationResult: ConfirmationResult, code: string) => Promise<void>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   token: string | null;
@@ -173,6 +183,86 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const loginWithGoogle = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const firebaseUser = result.user;
+      
+      // Extract name from Google profile
+      const displayName = firebaseUser.displayName || '';
+      const nameParts = displayName.split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
+      // Create user in backend database if doesn't exist
+      try {
+        const idToken = await firebaseUser.getIdToken();
+        // Try to get user first
+        try {
+          await api.getUser(firebaseUser.uid, idToken);
+        } catch (getUserError: any) {
+          // User doesn't exist, create them
+          if (getUserError.message.includes('not found') || getUserError.message.includes('404')) {
+            await api.createUser({
+              firebase_uid: firebaseUser.uid,
+              email: firebaseUser.email || '',
+              username: firebaseUser.email?.split('@')[0] || '',
+              first_name: firstName,
+              last_name: lastName,
+            }, idToken);
+          }
+        }
+      } catch (backendError) {
+        console.error('Failed to create user in backend:', backendError);
+        // Don't throw error here as Firebase auth was successful
+      }
+    } catch (error: any) {
+      throw new Error(error.message);
+    }
+  };
+
+  const sendPhoneVerificationCode = async (phoneNumber: string, recaptchaVerifier: RecaptchaVerifier): Promise<ConfirmationResult> => {
+    try {
+      const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
+      return confirmationResult;
+    } catch (error: any) {
+      throw new Error(error.message);
+    }
+  };
+
+  const verifyPhoneCode = async (confirmationResult: ConfirmationResult, code: string) => {
+    try {
+      const result = await confirmationResult.confirm(code);
+      const firebaseUser = result.user;
+      
+      // Create user in backend database if doesn't exist
+      try {
+        const idToken = await firebaseUser.getIdToken();
+        // Try to get user first
+        try {
+          await api.getUser(firebaseUser.uid, idToken);
+        } catch (getUserError: any) {
+          // User doesn't exist, create them
+          if (getUserError.message.includes('not found') || getUserError.message.includes('404')) {
+            await api.createUser({
+              firebase_uid: firebaseUser.uid,
+              email: firebaseUser.email || firebaseUser.phoneNumber || '',
+              username: firebaseUser.phoneNumber?.replace(/[^0-9]/g, '') || '',
+              first_name: '',
+              last_name: '',
+            }, idToken);
+          }
+        }
+      } catch (backendError) {
+        console.error('Failed to create user in backend:', backendError);
+        // Don't throw error here as Firebase auth was successful
+      }
+    } catch (error: any) {
+      throw new Error(error.message);
+    }
+  };
+
   const value: AuthContextType = {
     isAuthenticated,
     isLoading,
@@ -180,6 +270,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     firebaseUser,
     login,
     signup,
+    loginWithGoogle,
+    sendPhoneVerificationCode,
+    verifyPhoneCode,
     logout,
     resetPassword,
     token,
