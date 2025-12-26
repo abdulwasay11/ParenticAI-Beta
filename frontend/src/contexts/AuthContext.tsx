@@ -48,6 +48,140 @@ interface AuthContextType {
 // Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper function to ensure user exists in backend database with all required attributes
+async function ensureUserInBackend(firebaseUser: FirebaseUser, idToken: string): Promise<void> {
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:ensureUserInBackend',message:'ensureUserInBackend called',data:{firebaseUid:firebaseUser.uid,hasEmail:!!firebaseUser.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+  // #endregion
+  
+  try {
+    // Step 1: Check if user exists in backend, create if not
+    let userExists = false;
+    try {
+      await api.getUser(firebaseUser.uid, idToken);
+      userExists = true;
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:ensureUserInBackend',message:'User exists in backend',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
+    } catch (getUserError: any) {
+      if (getUserError.message.includes('not found') || getUserError.message.includes('404')) {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:ensureUserInBackend',message:'User not found, creating user',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        
+        // Extract name from display name or email
+        const displayName = firebaseUser.displayName || '';
+        const nameParts = displayName.split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+        
+        await api.createUser({
+          firebase_uid: firebaseUser.uid,
+          email: firebaseUser.email || firebaseUser.phoneNumber || '',
+          username: firebaseUser.email?.split('@')[0] || firebaseUser.phoneNumber?.replace(/[^0-9]/g, '') || '',
+          first_name: firstName,
+          last_name: lastName,
+        }, idToken);
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:ensureUserInBackend',message:'User created in backend',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        userExists = true;
+      } else {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:ensureUserInBackend',message:'Error checking user existence',data:{errorMessage:getUserError?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        throw getUserError;
+      }
+    }
+    
+    if (!userExists) return;
+    
+    // Step 2: Ensure parent profile exists
+    try {
+      await api.getParentProfile(firebaseUser.uid, idToken);
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:ensureUserInBackend',message:'Parent profile exists',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
+    } catch (getParentError: any) {
+      if (getParentError.message.includes('not found') || getParentError.message.includes('404')) {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:ensureUserInBackend',message:'Parent profile not found, creating',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        
+        await api.createParentProfile({
+          age: undefined,
+          location: undefined,
+          parenting_style: undefined,
+          concerns: undefined,
+          goals: undefined,
+          experience_level: undefined,
+          family_structure: undefined,
+        }, firebaseUser.uid, idToken);
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:ensureUserInBackend',message:'Parent profile created',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+      } else {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:ensureUserInBackend',message:'Error checking parent profile',data:{errorMessage:getParentError?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        console.error('Error checking parent profile:', getParentError);
+      }
+    }
+    
+    // Step 3: Ensure at least one child exists (sample child)
+    try {
+      const children = await api.getChildren(firebaseUser.uid, idToken);
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:ensureUserInBackend',message:'Children fetched',data:{childrenCount:children.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
+      
+      // Check if sample child already exists
+      const hasSampleChild = children.some(child => child.name === 'Sample Child');
+      
+      if (children.length === 0 || !hasSampleChild) {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:ensureUserInBackend',message:'No children or sample child missing, creating sample child',data:{hasSampleChild,childrenCount:children.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        
+        await api.createChild({
+          name: 'Sample Child',
+          age: 5,
+          gender: 'Other',
+          hobbies: ['Reading', 'Drawing'],
+          interests: ['Science', 'Art'],
+          personality_traits: ['Curious', 'Creative'],
+          school_grade: 'Kindergarten',
+        }, firebaseUser.uid, idToken);
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:ensureUserInBackend',message:'Sample child created',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+      } else {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:ensureUserInBackend',message:'Sample child already exists',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+      }
+    } catch (childrenError: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:ensureUserInBackend',message:'Error fetching/creating children',data:{errorMessage:childrenError?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
+      console.error('Error ensuring children exist:', childrenError);
+    }
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:ensureUserInBackend',message:'ensureUserInBackend completed successfully',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+  } catch (error: any) {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:ensureUserInBackend',message:'Error in ensureUserInBackend',data:{errorMessage:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+    console.error('Error ensuring user exists in backend:', error);
+    // Don't throw - allow login to continue even if backend operations fail
+  }
+}
+
 // Provider component
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -77,6 +211,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         // Set up axios interceptor for token
         axios.defaults.headers.common['Authorization'] = `Bearer ${idToken}`;
+        
+        // Ensure user exists in backend database with all required attributes
+        // This is a catch-all that works regardless of signup method
+        await ensureUserInBackend(firebaseUser, idToken);
         
         // Get user data from Firestore
         try {
