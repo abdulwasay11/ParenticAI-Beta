@@ -233,7 +233,7 @@ const ProfilePage: React.FC = () => {
         experience_level: profile.experience,
         family_structure: profile.family_structure || 'single',
         preferred_language: profile.preferred_language,
-        photo_url: photoUrl,
+        photo_url: photoUrl ?? undefined,
         partner_first_name: profile.family_structure === 'couple' ? profile.partner_first_name : undefined,
         partner_last_name: profile.family_structure === 'couple' ? profile.partner_last_name : undefined,
         partner_email: profile.family_structure === 'couple' ? profile.partner_email : undefined,
