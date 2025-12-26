@@ -13,6 +13,7 @@ import {
   IconButton,
   Avatar,
   Paper,
+  CircularProgress,
 } from '@mui/material';
 import {
   Psychology,
@@ -22,6 +23,10 @@ import {
   TrendingUp,
   Send,
   Person,
+  AttachFile,
+  Mic,
+  Stop,
+  Close,
 } from '@mui/icons-material';
 import { useAuth } from './contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -45,6 +50,8 @@ interface Message {
   text: string;
   sender: 'user' | 'ai';
   timestamp: Date;
+  images?: string[]; // Base64 or URLs
+  audio?: string; // Base64 or URL
 }
 
 // Features data with proper typing
@@ -119,7 +126,16 @@ const LandingPage: React.FC = () => {
   const [inputMessage, setInputMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const quickQuestions: string[] = [
@@ -157,22 +173,102 @@ const LandingPage: React.FC = () => {
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
     };
-  }, []);
+  }, [audioUrl]);
+
+  // Handle image selection
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach(file => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64String = reader.result as string;
+          setSelectedImages(prev => [...prev, base64String]);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Remove image
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Start audio recording
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        setAudioBlob(audioBlob);
+        const url = URL.createObjectURL(audioBlob);
+        setAudioUrl(url);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      alert('Could not access microphone. Please check permissions.');
+    }
+  };
+
+  // Stop audio recording
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  // Clear audio
+  const clearAudio = () => {
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+    }
+    setAudioUrl(null);
+    setAudioBlob(null);
+  };
 
   const handleSendMessage = async (): Promise<void> => {
-    if (!inputMessage.trim()) return;
+    if (!inputMessage.trim() && selectedImages.length === 0 && !audioBlob) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       text: inputMessage,
       sender: 'user',
-      timestamp: new Date()
+      timestamp: new Date(),
+      images: selectedImages.length > 0 ? selectedImages : undefined,
+      audio: audioBlob ? audioUrl || undefined : undefined
     };
 
     setMessages(prev => [...prev, userMessage]);
     const currentMessage = inputMessage;
     setInputMessage('');
+    setSelectedImages([]);
+    clearAudio();
     setIsLoading(true);
 
     const aiMessageId = (Date.now() + 1).toString();
@@ -189,7 +285,7 @@ const LandingPage: React.FC = () => {
 
     try {
       await api.sendChatMessageStream(
-        currentMessage,
+        currentMessage || '[Image or audio message]',
         [],
         (chunk: string) => {
           setMessages(prev => prev.map(msg => 
@@ -197,8 +293,8 @@ const LandingPage: React.FC = () => {
               ? { ...msg, text: msg.text + chunk }
               : msg
           ));
-          // Only scroll occasionally during streaming (every 10 chunks or so)
-          if (Math.random() < 0.1) {
+          // Smooth scroll during streaming
+          if (Math.random() < 0.15) {
             scrollToBottom(false);
           }
         },
@@ -347,7 +443,7 @@ const LandingPage: React.FC = () => {
                 }}
               >
                 <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                  🎯 Perfect for parents who want:
+                  Perfect for parents who want:
                 </Typography>
                 <Stack spacing={2}>
                   {benefitsList.map((item: string, index: number) => (
@@ -470,115 +566,354 @@ const LandingPage: React.FC = () => {
                 </Stack>
               </Box>
 
-              {/* Chat Interface */}
-              <Card sx={{ height: '500px', display: 'flex', flexDirection: 'column' }}>
+              {/* Chat Interface - ChatGPT Style */}
+              <Card 
+                sx={{ 
+                  height: '600px', 
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  border: '1px solid #e5e5e5',
+                }}
+              >
                 {/* Messages */}
-                <Box sx={{ 
-                  flex: 1, 
-                  p: 2, 
-                  overflow: 'auto',
-                  backgroundColor: 'white'
-                }}>
-                  <Stack spacing={2}>
+                <Box
+                  ref={messagesContainerRef}
+                  sx={{ 
+                    flex: 1, 
+                    overflowY: 'auto',
+                    overflowX: 'hidden',
+                    backgroundColor: '#f7f7f8',
+                    '&::-webkit-scrollbar': {
+                      width: '8px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      background: '#f1f1f1',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      background: '#888',
+                      borderRadius: '4px',
+                      '&:hover': {
+                        background: '#555',
+                      },
+                    },
+                  }}
+                >
+                  <Stack spacing={0}>
                     {messages.map((message: Message) => (
-                      <Box 
+                      <Box
                         key={message.id}
                         sx={{
                           display: 'flex',
-                          justifyContent: message.sender === 'user' ? 'flex-end' : 'flex-start',
-                          alignItems: 'flex-start',
-                          gap: 1
+                          gap: 2,
+                          py: 3,
+                          px: 2,
+                          backgroundColor: message.sender === 'user' ? '#f7f7f8' : 'white',
+                          '&:hover': {
+                            backgroundColor: message.sender === 'user' ? '#f0f0f0' : '#fafafa',
+                          },
                         }}
                       >
-                        {message.sender === 'ai' && (
-                          <Avatar sx={{ backgroundColor: 'primary.main' }}>
-                            <Psychology />
-                          </Avatar>
-                        )}
-                        
-                        <Paper
+                        {/* Avatar */}
+                        <Avatar
                           sx={{
-                            p: 2,
-                            maxWidth: '70%',
-                            backgroundColor: message.sender === 'user' ? 'primary.main' : 'grey.100',
-                            color: message.sender === 'user' ? 'white' : 'text.primary',
+                            width: 32,
+                            height: 32,
+                            backgroundColor: message.sender === 'user' ? '#19c37d' : '#ab68ff',
+                            flexShrink: 0,
                           }}
                         >
-                          {message.sender === 'ai' ? (
-                            <FormattedMessage text={message.text} variant="body1" />
+                          {message.sender === 'user' ? (
+                            <Person sx={{ fontSize: 20 }} />
                           ) : (
-                            <Typography variant="body1">
-                              {message.text}
-                            </Typography>
+                            <Psychology sx={{ fontSize: 20 }} />
                           )}
-                          <Typography 
-                            variant="caption" 
-                            sx={{ 
-                              opacity: 0.7,
+                        </Avatar>
+
+                        {/* Message Content */}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          {/* Images */}
+                          {message.images && message.images.length > 0 && (
+                            <Stack direction="row" spacing={1} sx={{ mb: 1, flexWrap: 'wrap' }}>
+                              {message.images.map((img, idx) => (
+                                <Box
+                                  key={idx}
+                                  sx={{
+                                    position: 'relative',
+                                    maxWidth: '200px',
+                                    borderRadius: 1,
+                                    overflow: 'hidden',
+                                  }}
+                                >
+                                  <img
+                                    src={img}
+                                    alt={`Upload ${idx + 1}`}
+                                    style={{
+                                      width: '100%',
+                                      height: 'auto',
+                                      display: 'block',
+                                    }}
+                                  />
+                                </Box>
+                              ))}
+                            </Stack>
+                          )}
+
+                          {/* Audio */}
+                          {message.audio && (
+                            <Box sx={{ mb: 1 }}>
+                              <audio controls src={message.audio} style={{ width: '100%', maxWidth: '400px' }} />
+                            </Box>
+                          )}
+
+                          {/* Text */}
+                          {message.text && (
+                            <Box>
+                              {message.sender === 'ai' ? (
+                                <FormattedMessage text={message.text} variant="body1" />
+                              ) : (
+                                <Typography
+                                  variant="body1"
+                                  sx={{
+                                    whiteSpace: 'pre-wrap',
+                                    wordBreak: 'break-word',
+                                    lineHeight: 1.75,
+                                  }}
+                                >
+                                  {message.text}
+                                </Typography>
+                              )}
+                            </Box>
+                          )}
+
+                          {/* Timestamp */}
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: 'text.secondary',
+                              mt: 0.5,
                               display: 'block',
-                              mt: 0.5
+                              fontSize: '0.75rem',
                             }}
                           >
-                            {message.timestamp.toLocaleTimeString()}
+                            {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </Typography>
-                        </Paper>
-
-                        {message.sender === 'user' && (
-                          <Avatar sx={{ backgroundColor: 'secondary.main' }}>
-                            <Person />
-                          </Avatar>
-                        )}
+                        </Box>
                       </Box>
                     ))}
-                    
-                    {/* Only show loading indicator if not streaming (no placeholder message) */}
+
+                    {/* Loading indicator */}
                     {isLoading && !streamingMessageId && (
-                      <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 1 }}>
-                        <Avatar sx={{ backgroundColor: 'primary.main' }}>
-                          <Psychology />
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          gap: 2,
+                          py: 3,
+                          px: 2,
+                          backgroundColor: 'white',
+                        }}
+                      >
+                        <Avatar
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            backgroundColor: '#ab68ff',
+                          }}
+                        >
+                          <Psychology sx={{ fontSize: 20 }} />
                         </Avatar>
-                        <Paper sx={{ p: 2, backgroundColor: 'grey.100' }}>
-                          <Typography variant="body1">
-                            AI is thinking...
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <CircularProgress size={16} />
+                          <Typography variant="body2" color="text.secondary">
+                            Thinking...
                           </Typography>
-                        </Paper>
+                        </Box>
                       </Box>
                     )}
-                    
+
                     <div ref={messagesEndRef} />
                   </Stack>
                 </Box>
 
                 {/* Input Area */}
-                <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider', backgroundColor: 'white' }}>
-                  <Stack direction="row" spacing={1}>
-                    <TextField
-                      fullWidth
-                      multiline
-                      maxRows={3}
-                      placeholder="Ask your parenting question..."
-                      value={inputMessage}
-                      onChange={(e) => setInputMessage(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      disabled={isLoading}
-                    />
-                    <IconButton 
-                      onClick={handleSendMessage}
-                      disabled={!inputMessage.trim() || isLoading}
-                      sx={{ 
-                        backgroundColor: 'primary.main',
-                        color: 'white',
-                        '&:hover': {
-                          backgroundColor: 'primary.dark',
-                        },
-                        '&:disabled': {
-                          backgroundColor: 'grey.300',
-                        }
-                      }}
-                    >
-                      <Send />
-                    </IconButton>
-                  </Stack>
+                <Box
+                  sx={{
+                    borderTop: '1px solid #e5e5e5',
+                    backgroundColor: 'white',
+                    p: 2,
+                  }}
+                >
+                  {/* Selected Images Preview */}
+                  {selectedImages.length > 0 && (
+                    <Box sx={{ mb: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      {selectedImages.map((img, idx) => (
+                        <Box
+                          key={idx}
+                          sx={{
+                            position: 'relative',
+                            width: 80,
+                            height: 80,
+                            borderRadius: 1,
+                            overflow: 'hidden',
+                            border: '1px solid #e5e5e5',
+                          }}
+                        >
+                          <img
+                            src={img}
+                            alt={`Preview ${idx + 1}`}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                          <IconButton
+                            size="small"
+                            onClick={() => removeImage(idx)}
+                            sx={{
+                              position: 'absolute',
+                              top: 0,
+                              right: 0,
+                              backgroundColor: 'rgba(0,0,0,0.5)',
+                              color: 'white',
+                              '&:hover': { backgroundColor: 'rgba(0,0,0,0.7)' },
+                            }}
+                          >
+                            <Close fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+
+                  {/* Audio Preview */}
+                  {audioUrl && (
+                    <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <audio controls src={audioUrl} style={{ flex: 1, maxWidth: '400px' }} />
+                      <IconButton size="small" onClick={clearAudio} color="error">
+                        <Close />
+                      </IconButton>
+                    </Box>
+                  )}
+
+                  {/* Input Box */}
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'flex-end',
+                      border: '1px solid #e5e5e5',
+                      borderRadius: 2,
+                      p: 1,
+                      '&:focus-within': {
+                        borderColor: 'primary.main',
+                        boxShadow: '0 0 0 2px rgba(99, 102, 241, 0.1)',
+                      },
+                    }}
+                  >
+                    <Stack direction="row" spacing={0.5} sx={{ width: '100%', alignItems: 'flex-end' }}>
+                      {/* Attachment Button */}
+                      <IconButton
+                        size="small"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isLoading}
+                        sx={{ color: 'text.secondary' }}
+                      >
+                        <AttachFile />
+                      </IconButton>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageSelect}
+                        style={{ display: 'none' }}
+                      />
+
+                      {/* Text Input */}
+                      <TextField
+                        fullWidth
+                        multiline
+                        maxRows={6}
+                        placeholder="Message ParenticAI..."
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        disabled={isLoading}
+                        variant="standard"
+                        InputProps={{
+                          disableUnderline: true,
+                          sx: {
+                            fontSize: '0.95rem',
+                            py: 0.5,
+                          },
+                        }}
+                        sx={{ flex: 1 }}
+                      />
+
+                      {/* Audio Recording Button */}
+                      {!isRecording ? (
+                        <IconButton
+                          size="small"
+                          onClick={startRecording}
+                          disabled={isLoading || !!audioBlob}
+                          sx={{ color: 'text.secondary' }}
+                        >
+                          <Mic />
+                        </IconButton>
+                      ) : (
+                        <IconButton
+                          size="small"
+                          onClick={stopRecording}
+                          sx={{ color: 'error.main' }}
+                        >
+                          <Stop />
+                        </IconButton>
+                      )}
+
+                      {/* Send Button */}
+                      <IconButton
+                        onClick={handleSendMessage}
+                        disabled={(!inputMessage.trim() && selectedImages.length === 0 && !audioBlob) || isLoading}
+                        sx={{
+                          backgroundColor: (!inputMessage.trim() && selectedImages.length === 0 && !audioBlob) || isLoading
+                            ? '#e5e5e5'
+                            : '#19c37d',
+                          color: 'white',
+                          '&:hover': {
+                            backgroundColor: (!inputMessage.trim() && selectedImages.length === 0 && !audioBlob) || isLoading
+                              ? '#e5e5e5'
+                              : '#16a570',
+                          },
+                          '&:disabled': {
+                            backgroundColor: '#e5e5e5',
+                            color: '#999',
+                          },
+                        }}
+                      >
+                        <Send />
+                      </IconButton>
+                    </Stack>
+                  </Paper>
+
+                  {/* Recording Indicator */}
+                  {isRecording && (
+                    <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{
+                          width: 12,
+                          height: 12,
+                          borderRadius: '50%',
+                          backgroundColor: 'error.main',
+                          animation: 'pulse 1.5s ease-in-out infinite',
+                          '@keyframes pulse': {
+                            '0%, 100%': { opacity: 1 },
+                            '50%': { opacity: 0.5 },
+                          },
+                        }}
+                      />
+                      <Typography variant="caption" color="error">
+                        Recording...
+                      </Typography>
+                    </Box>
+                  )}
                 </Box>
               </Card>
 
