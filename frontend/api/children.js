@@ -32,19 +32,29 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'firebase_uid, name, age, and gender are required' });
       }
 
-      // Get parent_id from firebase_uid
-      const userResult = await query(
-        `SELECT p.id as parent_id 
-         FROM users u 
-         JOIN parents p ON p.user_id = u.id 
-         WHERE u.firebase_uid = $1`,
-        [firebase_uid]
-      );
-
+      // Get user_id from firebase_uid
+      const userResult = await query('SELECT id FROM users WHERE firebase_uid = $1', [firebase_uid]);
       if (userResult.rows.length === 0) {
-        return res.status(404).json({ error: 'Parent profile not found. Please create parent profile first.' });
+        return res.status(404).json({ error: 'User not found' });
       }
-      const parent_id = userResult.rows[0].parent_id;
+      const userId = userResult.rows[0].id;
+
+      // Get or create parent profile
+      let parentResult = await query('SELECT id FROM parents WHERE user_id = $1', [userId]);
+      let parent_id;
+      
+      if (parentResult.rows.length === 0) {
+        // Create a default parent profile if it doesn't exist
+        console.log(`[children.js] Creating parent profile for user_id: ${userId}`);
+        const newParentResult = await query(
+          `INSERT INTO parents (user_id, parenting_score) VALUES ($1, 0) RETURNING id`,
+          [userId]
+        );
+        parent_id = newParentResult.rows[0].id;
+        console.log(`[children.js] Created parent profile with id: ${parent_id}`);
+      } else {
+        parent_id = parentResult.rows[0].id;
+      }
 
       const result = await query(
         `INSERT INTO children (parent_id, name, age, gender, hobbies, interests, personality_traits,

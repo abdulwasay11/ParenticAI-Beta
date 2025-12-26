@@ -156,6 +156,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           last_name: lastName,
         }, idToken);
         
+        // Create a parent profile first (required for creating children)
+        try {
+          await api.createParentProfile({
+            age: undefined,
+            location: undefined,
+            parenting_style: undefined,
+            concerns: undefined,
+            goals: undefined,
+            experience_level: undefined,
+            family_structure: undefined,
+          }, firebaseUser.uid, idToken);
+        } catch (parentError) {
+          console.error('Failed to create parent profile:', parentError);
+          // Continue anyway - parent profile will be created when user fills profile
+        }
+        
         // Create a sample child for new users
         try {
           await api.createChild({
@@ -228,6 +244,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             last_name: lastName,
           }, idToken);
           
+          // Create a parent profile first (required for creating children)
+          try {
+            await api.createParentProfile({
+              age: undefined,
+              location: undefined,
+              parenting_style: undefined,
+              concerns: undefined,
+              goals: undefined,
+              experience_level: undefined,
+              family_structure: undefined,
+            }, firebaseUser.uid, idToken);
+          } catch (parentError) {
+            console.error('Failed to create parent profile:', parentError);
+          }
+          
           // Create a sample child for new users
           try {
             await api.createChild({
@@ -283,6 +314,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             first_name: '',
             last_name: '',
           }, idToken);
+          
+          // Create a parent profile first (required for creating children)
+          try {
+            await api.createParentProfile({
+              age: undefined,
+              location: undefined,
+              parenting_style: undefined,
+              concerns: undefined,
+              goals: undefined,
+              experience_level: undefined,
+              family_structure: undefined,
+            }, firebaseUser.uid, idToken);
+          } catch (parentError) {
+            console.error('Failed to create parent profile:', parentError);
+          }
           
           // Create a sample child for new users
           try {

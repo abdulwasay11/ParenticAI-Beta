@@ -37,19 +37,22 @@ module.exports = async function handler(request, response) {
 
     const userId = userResult.rows[0].id;
 
-    // Get parent_id
-    const parentResult = await query('SELECT id FROM parents WHERE user_id = $1', [userId]);
+    // Get or create parent_id
+    let parentResult = await query('SELECT id FROM parents WHERE user_id = $1', [userId]);
+    let parentId;
+    
     if (parentResult.rows.length === 0) {
-      // Return zeros if no parent profile exists yet
-      return response.json({
-        childrenCount: 0,
-        chatCount: 0,
-        assessmentsCount: 0,
-        daysActive: 1
-      });
+      // Create a default parent profile if it doesn't exist
+      console.log(`[dashboard/stats.js] Creating parent profile for user_id: ${userId}`);
+      const newParentResult = await query(
+        `INSERT INTO parents (user_id, parenting_score) VALUES ($1, 0) RETURNING id`,
+        [userId]
+      );
+      parentId = newParentResult.rows[0].id;
+      console.log(`[dashboard/stats.js] Created parent profile with id: ${parentId}`);
+    } else {
+      parentId = parentResult.rows[0].id;
     }
-
-    const parentId = parentResult.rows[0].id;
 
     // Get children count
     const childrenResult = await query('SELECT COUNT(*) as count FROM children WHERE parent_id = $1', [parentId]);
