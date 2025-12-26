@@ -11,7 +11,8 @@ import {
   Tab,
   Alert,
   CircularProgress,
-  Divider
+  Divider,
+  useTheme
 } from '@mui/material';
 import { ArrowBack, Phone, Google } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
@@ -42,6 +43,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 const LoginPage: React.FC = () => {
+  const theme = useTheme();
   const [tabValue, setTabValue] = useState(0);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -256,10 +258,17 @@ const LoginPage: React.FC = () => {
       <Container maxWidth="sm">
         <Card
           sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            backgroundColor: theme.palette.mode === 'dark' 
+              ? 'rgba(30, 30, 30, 0.95)' 
+              : 'rgba(255, 255, 255, 0.95)',
             backdropFilter: 'blur(10px)',
             borderRadius: 3,
-            border: '1px solid rgba(255, 255, 255, 0.2)',
+            border: theme.palette.mode === 'dark'
+              ? '1px solid rgba(255, 255, 255, 0.1)'
+              : '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: theme.palette.mode === 'dark'
+              ? '0 8px 32px rgba(0, 0, 0, 0.4)'
+              : '0 8px 32px rgba(0, 0, 0, 0.1)',
           }}
         >
           <CardContent sx={{ p: 4 }}>
