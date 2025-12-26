@@ -12,7 +12,8 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel
+  InputLabel,
+  useTheme
 } from '@mui/material';
 import { 
   Send, 
@@ -39,6 +40,7 @@ interface Message {
 }
 
 const ChatPage: React.FC = () => {
+  const theme = useTheme();
   const { firebaseUser, token } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -430,14 +432,14 @@ const ChatPage: React.FC = () => {
         height: 'calc(100vh - 112px)', // Account for Toolbar (64px) + Container padding (48px)
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: '#f7f7f8',
+        backgroundColor: 'background.default',
         position: 'relative',
         mx: -3, // Remove Container padding
         my: -3, // Remove Container padding
       }}
     >
       {/* Child Selector - Top Left */}
-      <Box sx={{ p: 2, borderBottom: '1px solid #e5e5e5', backgroundColor: 'white', display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', backgroundColor: 'background.paper', display: 'flex', alignItems: 'center', gap: 2 }}>
         <FormControl size="small" sx={{ minWidth: 200 }}>
           <InputLabel id="child-select-label">Chat Context</InputLabel>
           <Select
@@ -468,7 +470,7 @@ const ChatPage: React.FC = () => {
 
       {/* Quick Questions - Only show when no messages or at top */}
       {messages.length <= 1 && (
-        <Box sx={{ p: 2, borderBottom: '1px solid #e5e5e5', backgroundColor: 'white' }}>
+        <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', backgroundColor: 'background.paper' }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
             Quick Questions:
           </Typography>
@@ -505,13 +507,13 @@ const ChatPage: React.FC = () => {
             width: '8px',
           },
           '&::-webkit-scrollbar-track': {
-            background: '#f1f1f1',
+            background: theme.palette.mode === 'dark' ? '#2a2a2a' : '#f1f1f1',
           },
           '&::-webkit-scrollbar-thumb': {
-            background: '#888',
+            background: theme.palette.mode === 'dark' ? '#555' : '#888',
             borderRadius: '4px',
             '&:hover': {
-              background: '#555',
+              background: theme.palette.mode === 'dark' ? '#777' : '#555',
             },
           },
         }}
@@ -526,9 +528,13 @@ const ChatPage: React.FC = () => {
                   gap: 2,
                   py: 3,
                   px: 2,
-                  backgroundColor: message.sender === 'user' ? '#f7f7f8' : 'white',
+                  backgroundColor: message.sender === 'user' 
+                    ? (theme.palette.mode === 'dark' ? 'rgba(25, 195, 125, 0.1)' : '#f7f7f8')
+                    : 'background.paper',
                   '&:hover': {
-                    backgroundColor: message.sender === 'user' ? '#f0f0f0' : '#fafafa',
+                    backgroundColor: message.sender === 'user'
+                      ? (theme.palette.mode === 'dark' ? 'rgba(25, 195, 125, 0.15)' : '#f0f0f0')
+                      : (theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#fafafa'),
                   },
                 }}
               >
@@ -628,7 +634,7 @@ const ChatPage: React.FC = () => {
                   gap: 2,
                   py: 3,
                   px: 2,
-                  backgroundColor: 'white',
+                  backgroundColor: 'background.paper',
                 }}
               >
                 <Avatar
@@ -657,8 +663,9 @@ const ChatPage: React.FC = () => {
           {/* Input Area */}
       <Box
         sx={{
-          borderTop: '1px solid #e5e5e5',
-          backgroundColor: 'white',
+          borderTop: 1,
+          borderColor: 'divider',
+          backgroundColor: 'background.paper',
           p: 2,
         }}
       >
@@ -675,7 +682,8 @@ const ChatPage: React.FC = () => {
                     height: 80,
                     borderRadius: 1,
                     overflow: 'hidden',
-                    border: '1px solid #e5e5e5',
+                    border: 1,
+                    borderColor: 'divider',
                   }}
                 >
                   <img
@@ -718,12 +726,16 @@ const ChatPage: React.FC = () => {
             sx={{
               display: 'flex',
               alignItems: 'flex-end',
-              border: '1px solid #e5e5e5',
+              border: 1,
+              borderColor: 'divider',
               borderRadius: 2,
               p: 1,
+              backgroundColor: 'background.paper',
               '&:focus-within': {
                 borderColor: 'primary.main',
-                boxShadow: '0 0 0 2px rgba(99, 102, 241, 0.1)',
+                boxShadow: theme.palette.mode === 'dark'
+                  ? '0 0 0 2px rgba(99, 102, 241, 0.3)'
+                  : '0 0 0 2px rgba(99, 102, 241, 0.1)',
               },
             }}
           >
@@ -793,17 +805,17 @@ const ChatPage: React.FC = () => {
                 disabled={(!inputMessage.trim() && selectedImages.length === 0 && !audioBlob) || isLoading}
                 sx={{ 
                   backgroundColor: (!inputMessage.trim() && selectedImages.length === 0 && !audioBlob) || isLoading
-                    ? '#e5e5e5'
+                    ? (theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#e5e5e5')
                     : '#19c37d',
                   color: 'white',
                   '&:hover': {
                     backgroundColor: (!inputMessage.trim() && selectedImages.length === 0 && !audioBlob) || isLoading
-                      ? '#e5e5e5'
+                      ? (theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#e5e5e5')
                       : '#16a570',
                   },
                   '&:disabled': {
-                    backgroundColor: '#e5e5e5',
-                    color: '#999',
+                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#e5e5e5',
+                    color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : '#999',
                   },
                 }}
               >
