@@ -34,7 +34,9 @@ const ChatPage: React.FC = () => {
   ]);
   const [inputMessage, setInputMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const quickQuestions: string[] = [
     'How do I handle tantrums?',
@@ -44,13 +46,35 @@ const ChatPage: React.FC = () => {
     'Discipline strategies',
   ];
 
-  const scrollToBottom = (): void => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (immediate: boolean = false): void => {
+    if (immediate) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    } else {
+      // Debounce scrolling during streaming
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      scrollTimeoutRef.current = setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    // Only scroll immediately when not streaming
+    if (!streamingMessageId) {
+      scrollToBottom(false);
+    }
+  }, [messages, streamingMessageId]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSendMessage = async (): Promise<void> => {
     if (!inputMessage.trim()) return;
@@ -77,6 +101,8 @@ const ChatPage: React.FC = () => {
     };
 
     setMessages(prev => [...prev, aiMessage]);
+    setStreamingMessageId(aiMessageId);
+    scrollToBottom(true); // Scroll immediately when message starts
 
     try {
       // Use streaming API
@@ -90,14 +116,21 @@ const ChatPage: React.FC = () => {
               ? { ...msg, text: msg.text + chunk }
               : msg
           ));
+          // Only scroll occasionally during streaming (every 10 chunks or so)
+          if (Math.random() < 0.1) {
+            scrollToBottom(false);
+          }
         },
         () => {
           // Stream complete
           setIsLoading(false);
+          setStreamingMessageId(null);
+          scrollToBottom(true); // Final scroll when complete
         },
         (error: Error) => {
           console.error('Error streaming message:', error);
           setIsLoading(false);
+          setStreamingMessageId(null);
           
           // Update the message with error
           setMessages(prev => prev.map(msg => 
@@ -105,17 +138,20 @@ const ChatPage: React.FC = () => {
               ? { ...msg, text: 'Sorry, I encountered an error while processing your request. Please try again.' }
               : msg
           ));
+          scrollToBottom(true);
         }
       );
     } catch (error) {
       console.error('Error sending message to AI:', error);
       setIsLoading(false);
+      setStreamingMessageId(null);
       
       setMessages(prev => prev.map(msg => 
         msg.id === aiMessageId 
           ? { ...msg, text: 'Sorry, I encountered an error while processing your request. Please make sure the AI service is running and try again.' }
           : msg
       ));
+      scrollToBottom(true);
     }
   };
 
@@ -220,7 +256,8 @@ const ChatPage: React.FC = () => {
                 </Box>
               ))}
               
-              {isLoading && (
+              {/* Only show loading indicator if not streaming (no placeholder message) */}
+              {isLoading && !streamingMessageId && (
                 <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 1 }}>
                   <Avatar sx={{ backgroundColor: 'primary.main' }}>
                     <Psychology />

@@ -34,9 +34,17 @@ module.exports = async function handler(request, response) {
     }
 
     // Build system prompt
+    // For anonymous users (no child context), provide concise responses
+    // For signed-in users with child context, provide detailed responses
+    const isAnonymous = !childContext || !Array.isArray(childContext) || childContext.length === 0;
+    
     let systemPrompt = 'You are a helpful and knowledgeable AI parenting assistant. Provide evidence-based, compassionate, and practical parenting advice.';
-    if (childContext && Array.isArray(childContext) && childContext.length > 0) {
+    
+    if (isAnonymous) {
+      systemPrompt += ' Keep your responses concise and to the point (2-3 paragraphs maximum). Focus on the most important actionable advice.';
+    } else {
       systemPrompt += `\n\nContext about the child(ren): ${childContext.join(', ')}`;
+      systemPrompt += ' Provide detailed, comprehensive advice tailored to the child\'s context.';
     }
 
     // Set headers for streaming response
