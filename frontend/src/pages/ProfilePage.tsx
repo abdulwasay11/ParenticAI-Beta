@@ -50,23 +50,27 @@ const ProfilePage: React.FC = () => {
     experience: '',
   });
 
-  // #region agent log
-  React.useEffect(() => {
-    fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProfilePage.tsx:52',message:'ProfilePage component rendered',data:{hasFirebaseUser:!!firebaseUser,firebaseEmail:firebaseUser?.email,firebaseDisplayName:firebaseUser?.displayName,hasToken:!!token,initialProfileEmail:profile.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-  }, [firebaseUser, token, profile.email]);
-  // #endregion
+  // Populate profile with Firebase data immediately when available
+  useEffect(() => {
+    if (firebaseUser && !profile.email) {
+      const displayName = firebaseUser.displayName || '';
+      const nameParts = displayName.split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
+      setProfile(prev => ({
+        ...prev,
+        email: firebaseUser.email || prev.email || '',
+        firstName: firstName || prev.firstName || '',
+        lastName: lastName || prev.lastName || '',
+      }));
+    }
+  }, [firebaseUser]);
 
-  // Load profile data
+  // Load profile data from API
   useEffect(() => {
     const loadProfile = async () => {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProfilePage.tsx:55',message:'loadProfile called',data:{hasFirebaseUser:!!firebaseUser,hasUid:!!firebaseUser?.uid,hasToken:!!token,firebaseEmail:firebaseUser?.email,firebaseDisplayName:firebaseUser?.displayName},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-      
       if (!firebaseUser?.uid || !token) {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProfilePage.tsx:58',message:'Early return - missing firebaseUser or token',data:{hasFirebaseUser:!!firebaseUser,hasUid:!!firebaseUser?.uid,hasToken:!!token},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         setIsLoading(false);
         return;
       }
@@ -75,24 +79,12 @@ const ProfilePage: React.FC = () => {
         setIsLoading(true);
         setError(null);
 
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProfilePage.tsx:66',message:'Before api.getUser call',data:{firebaseUid:firebaseUser.uid,firebaseEmail:firebaseUser.email,firebaseDisplayName:firebaseUser.displayName},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-
         // Get user data
         const userData = await api.getUser(firebaseUser.uid, token);
-        
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProfilePage.tsx:70',message:'api.getUser succeeded',data:{userDataEmail:userData.email,userDataFirstName:userData.first_name,userDataLastName:userData.last_name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         
         // Get parent profile
         try {
           const parentData = await api.getParentProfile(firebaseUser.uid, token);
-          
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProfilePage.tsx:75',message:'Setting profile with API data',data:{email:userData.email||firebaseUser.email,firstName:userData.first_name,lastName:userData.last_name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-          // #endregion
           
           setProfile({
             firstName: userData.first_name || '',
@@ -112,29 +104,31 @@ const ProfilePage: React.FC = () => {
         } catch (err) {
           // Parent profile might not exist yet
           console.log('Parent profile not found, will create on save');
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProfilePage.tsx:90',message:'Parent profile not found, setting profile with user data only',data:{email:userData.email||firebaseUser.email,firstName:userData.first_name,lastName:userData.last_name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-          // #endregion
-          setProfile({
-            firstName: userData.first_name || '',
-            lastName: userData.last_name || '',
-            email: userData.email || firebaseUser.email || '',
-            phone: '',
-            bio: '',
-            parentingStyle: '',
-            experience: '',
-          });
+          setProfile(prev => ({
+            ...prev,
+            firstName: userData.first_name || prev.firstName || '',
+            lastName: userData.last_name || prev.lastName || '',
+            email: userData.email || firebaseUser.email || prev.email || '',
+          }));
         }
       } catch (err: any) {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProfilePage.tsx:100',message:'Error in loadProfile catch block',data:{errorMessage:err.message,errorName:err.name,hasFirebaseUser:!!firebaseUser,firebaseEmail:firebaseUser?.email,firebaseDisplayName:firebaseUser?.displayName,currentProfileEmail:profile.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         console.error('Error loading profile:', err);
         setError(err.message || 'Failed to load profile');
         
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProfilePage.tsx:103',message:'Profile state after error - checking if Firebase data should be used',data:{profileEmail:profile.email,profileFirstName:profile.firstName,profileLastName:profile.lastName,firebaseEmail:firebaseUser?.email,firebaseDisplayName:firebaseUser?.displayName},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
+        // Populate profile with Firebase data as fallback when API fails
+        if (firebaseUser) {
+          const displayName = firebaseUser.displayName || '';
+          const nameParts = displayName.split(' ');
+          const firstName = nameParts[0] || '';
+          const lastName = nameParts.slice(1).join(' ') || '';
+          
+          setProfile(prev => ({
+            ...prev,
+            email: firebaseUser.email || prev.email || '',
+            firstName: firstName || prev.firstName || '',
+            lastName: lastName || prev.lastName || '',
+          }));
+        }
       } finally {
         setIsLoading(false);
       }
