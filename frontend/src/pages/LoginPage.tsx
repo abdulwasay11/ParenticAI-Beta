@@ -101,11 +101,31 @@ const LoginPage: React.FC = () => {
     setError('');
     setLoading(true);
     try {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.tsx:100',message:'handleGoogleSignIn called',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      
       await loginWithGoogle();
-      navigate('/dashboard');
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.tsx:107',message:'loginWithGoogle completed',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      
+      // Wait for auth state to update, then navigate
+      // The onAuthStateChanged listener will update isAuthenticated
+      // We'll wait a moment for it to propagate, then navigate
+      setTimeout(() => {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.tsx:115',message:'Navigating to dashboard after Google sign-in',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        navigate('/dashboard');
+        setLoading(false);
+      }, 1000);
     } catch (error: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.tsx:120',message:'Error in handleGoogleSignIn',data:{errorMessage:error.message,errorName:error.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       setError(error.message || 'Failed to sign in with Google');
-    } finally {
       setLoading(false);
     }
   };

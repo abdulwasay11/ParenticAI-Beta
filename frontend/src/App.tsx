@@ -120,6 +120,12 @@ const ProtectedRoute: React.FC<RouteWrapperProps> = ({ children }) => {
 const PublicRoute: React.FC<RouteWrapperProps> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
+  // #region agent log
+  React.useEffect(() => {
+    fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:121',message:'PublicRoute render',data:{isAuthenticated,isLoading},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+  }, [isAuthenticated, isLoading]);
+  // #endregion
+
   if (isLoading) {
     return (
       <Box 
@@ -136,6 +142,9 @@ const PublicRoute: React.FC<RouteWrapperProps> = ({ children }) => {
   }
 
   if (isAuthenticated) {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:139',message:'PublicRoute redirecting authenticated user to dashboard',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     return <Navigate to="/dashboard" replace />;
   }
 

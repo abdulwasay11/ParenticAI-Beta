@@ -58,9 +58,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:60',message:'onAuthStateChanged fired',data:{hasFirebaseUser:!!firebaseUser,firebaseUid:firebaseUser?.uid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
+      
       setFirebaseUser(firebaseUser);
       
       if (firebaseUser) {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:65',message:'Setting isAuthenticated to true',data:{firebaseUid:firebaseUser.uid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        
         setIsAuthenticated(true);
         
         // Get the ID token
@@ -103,11 +111,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           });
         }
       } else {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:106',message:'Setting isAuthenticated to false',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        
         setIsAuthenticated(false);
         setUser(null);
         setToken(null);
         delete axios.defaults.headers.common['Authorization'];
       }
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:115',message:'Setting isLoading to false',data:{isAuthenticated:!!firebaseUser},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       
       setIsLoading(false);
     });
@@ -217,9 +233,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const loginWithGoogle = async () => {
     try {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:218',message:'loginWithGoogle called',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const firebaseUser = result.user;
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:223',message:'Google sign-in popup completed',data:{hasFirebaseUser:!!firebaseUser,firebaseUid:firebaseUser.uid,email:firebaseUser.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       
       // Extract name from Google profile
       const displayName = firebaseUser.displayName || '';
@@ -230,12 +254,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Create user in backend database if doesn't exist
       try {
         const idToken = await firebaseUser.getIdToken();
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:233',message:'Got ID token, checking if user exists',data:{hasIdToken:!!idToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
+        
         // Try to get user first
         try {
           await api.getUser(firebaseUser.uid, idToken);
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:237',message:'User already exists in database',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+          // #endregion
         } catch (getUserError: any) {
         // User doesn't exist, create them
         if (getUserError.message.includes('not found') || getUserError.message.includes('404')) {
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:241',message:'User not found, creating new user',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+          // #endregion
+          
           await api.createUser({
             firebase_uid: firebaseUser.uid,
             email: firebaseUser.email || '',
@@ -243,6 +278,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             first_name: firstName,
             last_name: lastName,
           }, idToken);
+          
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:250',message:'User created, creating parent profile',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+          // #endregion
           
           // Create a parent profile first (required for creating children)
           try {
@@ -255,7 +294,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               experience_level: undefined,
               family_structure: undefined,
             }, firebaseUser.uid, idToken);
-          } catch (parentError) {
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:262',message:'Parent profile created',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion
+          } catch (parentError: any) {
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:265',message:'Failed to create parent profile',data:{errorMessage:parentError?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion
             console.error('Failed to create parent profile:', parentError);
           }
           
@@ -270,16 +315,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               personality_traits: ['Curious', 'Creative'],
               school_grade: 'Kindergarten',
             }, firebaseUser.uid, idToken);
-          } catch (childError) {
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:277',message:'Sample child created',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion
+          } catch (childError: any) {
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:280',message:'Failed to create sample child',data:{errorMessage:childError?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion
             console.error('Failed to create sample child:', childError);
           }
         }
         }
-      } catch (backendError) {
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:285',message:'loginWithGoogle backend operations completed',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+      } catch (backendError: any) {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:288',message:'Backend error in loginWithGoogle',data:{errorMessage:backendError?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         console.error('Failed to create user in backend:', backendError);
         // Don't throw error here as Firebase auth was successful
       }
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:293',message:'loginWithGoogle function completed successfully',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
     } catch (error: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:296',message:'Error in loginWithGoogle catch block',data:{errorMessage:error.message,errorName:error.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       throw new Error(error.message);
     }
   };
