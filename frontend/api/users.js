@@ -50,11 +50,28 @@ module.exports = async function handler(req, res) {
 
     if (req.method === 'POST') {
       // Create user
-      // Parse body if it's a string (Vercel sometimes sends string bodies)
+      // Parse body - Vercel may send it as string, object, or undefined
       let body = req.body;
+      
+      // #region agent log
+      console.log('[users.js] Raw req.body:', { type: typeof body, isString: typeof body === 'string', isObject: typeof body === 'object', isUndefined: body === undefined, bodyValue: body });
+      // #endregion
+      
+      // If body is undefined or null, try to read from request stream
+      if (!body) {
+        // #region agent log
+        console.log('[users.js] Body is undefined/null, body might not be parsed');
+        // #endregion
+        return res.status(400).json({ error: 'Request body is missing' });
+      }
+      
+      // Parse if it's a string
       if (typeof body === 'string') {
         try {
           body = JSON.parse(body);
+          // #region agent log
+          console.log('[users.js] Parsed string body to JSON');
+          // #endregion
         } catch (e) {
           console.error('[users.js] Failed to parse body as JSON:', e);
           return res.status(400).json({ error: 'Invalid JSON in request body' });
@@ -62,19 +79,44 @@ module.exports = async function handler(req, res) {
       }
       
       // #region agent log
-      console.log('[users.js] POST request body:', JSON.stringify(body, null, 2));
+      console.log('[users.js] POST request body after parsing:', JSON.stringify(body, null, 2), 'Type:', typeof body, 'Keys:', body ? Object.keys(body) : []);
       // #endregion
+      
       const { firebase_uid, email, username, first_name, last_name } = body || {};
       
       // #region agent log
-      console.log('[users.js] Extracted fields:', { firebase_uid, email, username, first_name, last_name, hasFirebaseUid: !!firebase_uid, hasEmail: !!email });
+      console.log('[users.js] Extracted fields:', { 
+        firebase_uid, 
+        email, 
+        username, 
+        first_name, 
+        last_name, 
+        hasFirebaseUid: !!firebase_uid, 
+        hasEmail: !!email,
+        firebaseUidType: typeof firebase_uid,
+        emailType: typeof email
+      });
       // #endregion
       
       if (!firebase_uid || !email) {
         // #region agent log
-        console.log('[users.js] Missing required fields', { firebase_uid: !!firebase_uid, email: !!email, bodyKeys: body ? Object.keys(body) : [] });
+        console.log('[users.js] Missing required fields', { 
+          firebase_uid: !!firebase_uid, 
+          email: !!email, 
+          bodyKeys: body ? Object.keys(body) : [],
+          bodyType: typeof body,
+          bodyStringified: JSON.stringify(body)
+        });
         // #endregion
-        return res.status(400).json({ error: 'firebase_uid and email are required', received: { firebase_uid: !!firebase_uid, email: !!email, bodyKeys: body ? Object.keys(body) : [] } });
+        return res.status(400).json({ 
+          error: 'firebase_uid and email are required', 
+          received: { 
+            firebase_uid: !!firebase_uid, 
+            email: !!email, 
+            bodyKeys: body ? Object.keys(body) : [],
+            bodyType: typeof body
+          } 
+        });
       }
 
       const result = await query(
