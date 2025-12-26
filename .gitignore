@@ -3,3 +3,4 @@ frontend/build
 .env
 .DS_Store
 
+.cursor/debug.log
