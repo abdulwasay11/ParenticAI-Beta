@@ -100,3 +100,7 @@
 {"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":true,"isLoading":false},"timestamp":1766790193099,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
 {"location":"App.tsx:139","message":"PublicRoute redirecting authenticated user to dashboard","data":{},"timestamp":1766790193097,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
 {"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":true},"timestamp":1766790233092,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":false},"timestamp":1766791713823,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":true,"firebaseUid":"SglGtYqjWsh7BXnVxpZT9SMlzau1"},"timestamp":1766791753131,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:65","message":"Setting isAuthenticated to true","data":{"firebaseUid":"SglGtYqjWsh7BXnVxpZT9SMlzau1"},"timestamp":1766791753134,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":true},"timestamp":1766791796125,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}

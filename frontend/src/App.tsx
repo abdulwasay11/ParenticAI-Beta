@@ -1,7 +1,5 @@
 import React, { ReactNode } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
 import { Box, CircularProgress } from '@mui/material';
 
 // Import pages
@@ -19,75 +17,12 @@ import ChatHistoryPage from './pages/ChatHistoryPage';
 // Import layout and auth
 import Layout from './components/Layout/Layout';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 // TypeScript interfaces
 interface RouteWrapperProps {
   children: ReactNode;
 }
-
-// Create the theme with ParenticAI colors
-const theme = createTheme({
-  palette: {
-    mode: 'light',
-    primary: {
-      main: '#6366f1', // Soft indigo
-      light: '#a5b4fc',
-      dark: '#4338ca',
-    },
-    secondary: {
-      main: '#ec4899', // Soft pink
-      light: '#f9a8d4',
-      dark: '#be185d',
-    },
-    background: {
-      default: '#fefbff', // Very light purple tint
-      paper: '#ffffff',
-    },
-  },
-  typography: {
-    fontFamily: '"Poppins", "Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h1: {
-      fontFamily: 'Poppins',
-      fontWeight: 700,
-    },
-    h2: {
-      fontFamily: 'Poppins', 
-      fontWeight: 600,
-    },
-    button: {
-      fontFamily: 'Poppins',
-      fontWeight: 500,
-      textTransform: 'none',
-    },
-  },
-  shape: {
-    borderRadius: 12,
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 12,
-          padding: '10px 24px',
-          fontSize: '0.95rem',
-          fontWeight: 500,
-          boxShadow: 'none',
-          '&:hover': {
-            boxShadow: '0 4px 12px rgba(99, 102, 241, 0.15)',
-          },
-        },
-      },
-    },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: 16,
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        },
-      },
-    },
-  },
-});
 
 
 
@@ -154,8 +89,7 @@ const PublicRoute: React.FC<RouteWrapperProps> = ({ children }) => {
 
 const App: React.FC = () => {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <ThemeProvider>
       <AuthProvider>
         <Router>
           <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
