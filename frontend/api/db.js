@@ -36,10 +36,12 @@ function getPool() {
 }
 
 async function query(text, params) {
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'db.js:24',message:'Query function called',data:{hasPool:!!pool,hasDatabaseUrl:!!(process.env.DATABASE_URL||process.env.POSTGRES_URL)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-  // #endregion
+  // Get pool first to avoid temporal dead zone
   const pool = getPool();
+  
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'db.js:38',message:'Query function called',data:{hasPool:!!pool,hasDatabaseUrl:!!(process.env.DATABASE_URL||process.env.POSTGRES_URL)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+  // #endregion
   const start = Date.now();
   try {
     // #region agent log
