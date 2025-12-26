@@ -28,7 +28,9 @@
     "react-query": "^3.39.3",
     "recharts": "^2.8.0",
     "@fontsource/poppins": "^5.0.8",
-    "@fontsource/inter": "^5.0.15"
+    "@fontsource/inter": "^5.0.15",
+    "@vercel/node": "^3.0.0",
+    "pg": "^8.11.3"
   },
   "scripts": {
     "start": "DANGEROUSLY_DISABLE_HOST_CHECK=true react-scripts start",

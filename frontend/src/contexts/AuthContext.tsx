@@ -6,7 +6,14 @@ import {
   signOut,
   onAuthStateChanged,
   sendPasswordResetEmail,
-  updateProfile
+  updateProfile,
+  signInWithPopup,
+  GoogleAuthProvider,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  PhoneAuthProvider,
+  signInWithCredential,
+  ConfirmationResult
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
@@ -30,6 +37,9 @@ interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  sendPhoneVerificationCode: (phoneNumber: string, recaptchaVerifier: RecaptchaVerifier) => Promise<ConfirmationResult>;
+  verifyPhoneCode: (confirmationResult: ConfirmationResult, code: string) => Promise<void>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   token: string | null;
@@ -37,6 +47,84 @@ interface AuthContextType {
 
 // Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Helper function to ensure user exists in backend database with all required attributes
+async function ensureUserInBackend(firebaseUser: FirebaseUser, idToken: string): Promise<void> {
+  try {
+    // Step 1: Check if user exists in backend, create if not
+    let userExists = false;
+    try {
+      await api.getUser(firebaseUser.uid, idToken);
+      userExists = true;
+    } catch (getUserError: any) {
+      if (getUserError.message.includes('not found') || getUserError.message.includes('404')) {
+        // Extract name from display name or email
+        const displayName = firebaseUser.displayName || '';
+        const nameParts = displayName.split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+        
+        await api.createUser({
+          firebase_uid: firebaseUser.uid,
+          email: firebaseUser.email || firebaseUser.phoneNumber || '',
+          username: firebaseUser.email?.split('@')[0] || firebaseUser.phoneNumber?.replace(/[^0-9]/g, '') || '',
+          first_name: firstName,
+          last_name: lastName,
+        }, idToken);
+        
+        userExists = true;
+      } else {
+        throw getUserError;
+      }
+    }
+    
+    if (!userExists) return;
+    
+    // Step 2: Ensure parent profile exists
+    try {
+      await api.getParentProfile(firebaseUser.uid, idToken);
+    } catch (getParentError: any) {
+      if (getParentError.message.includes('not found') || getParentError.message.includes('404')) {
+        await api.createParentProfile({
+          age: undefined,
+          location: undefined,
+          parenting_style: undefined,
+          concerns: undefined,
+          goals: undefined,
+          experience_level: undefined,
+          family_structure: undefined,
+        }, firebaseUser.uid, idToken);
+      } else {
+        console.error('Error checking parent profile:', getParentError);
+      }
+    }
+    
+    // Step 3: Ensure at least one child exists (sample child)
+    try {
+      const children = await api.getChildren(firebaseUser.uid, idToken);
+      
+      // Check if sample child already exists
+      const hasSampleChild = children.some(child => child.name === 'Sample Child');
+      
+      if (children.length === 0 || !hasSampleChild) {
+        await api.createChild({
+          name: 'Sample Child',
+          age: 5,
+          gender: 'Other',
+          hobbies: ['Reading', 'Drawing'],
+          interests: ['Science', 'Art'],
+          personality_traits: ['Curious', 'Creative'],
+          school_grade: 'Kindergarten',
+        }, firebaseUser.uid, idToken);
+      }
+    } catch (childrenError: any) {
+      console.error('Error ensuring children exist:', childrenError);
+    }
+  } catch (error: any) {
+    console.error('Error ensuring user exists in backend:', error);
+    // Don't throw - allow login to continue even if backend operations fail
+  }
+}
 
 // Provider component
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -59,6 +147,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         // Set up axios interceptor for token
         axios.defaults.headers.common['Authorization'] = `Bearer ${idToken}`;
+        
+        // Ensure user exists in backend database with all required attributes
+        // This is a catch-all that works regardless of signup method
+        await ensureUserInBackend(firebaseUser, idToken);
         
         // Get user data from Firestore
         try {
@@ -137,13 +229,46 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // Create user in backend database
       try {
+        const idToken = await firebaseUser.getIdToken();
         await api.createUser({
-          keycloak_id: firebaseUser.uid, // Using Firebase UID as keycloak_id
+          firebase_uid: firebaseUser.uid,
           email: firebaseUser.email || '',
           username: email.split('@')[0], // Use email prefix as username
           first_name: firstName,
           last_name: lastName,
-        });
+        }, idToken);
+        
+        // Create a parent profile first (required for creating children)
+        try {
+          await api.createParentProfile({
+            age: undefined,
+            location: undefined,
+            parenting_style: undefined,
+            concerns: undefined,
+            goals: undefined,
+            experience_level: undefined,
+            family_structure: undefined,
+          }, firebaseUser.uid, idToken);
+        } catch (parentError) {
+          console.error('Failed to create parent profile:', parentError);
+          // Continue anyway - parent profile will be created when user fills profile
+        }
+        
+        // Create a sample child for new users
+        try {
+          await api.createChild({
+            name: 'Sample Child',
+            age: 5,
+            gender: 'Other',
+            hobbies: ['Reading', 'Drawing'],
+            interests: ['Science', 'Art'],
+            personality_traits: ['Curious', 'Creative'],
+            school_grade: 'Kindergarten',
+          }, firebaseUser.uid, idToken);
+        } catch (childError) {
+          console.error('Failed to create sample child:', childError);
+          // Don't throw error here as user creation was successful
+        }
       } catch (backendError) {
         console.error('Failed to create user in backend:', backendError);
         // Don't throw error here as Firebase auth was successful
@@ -172,6 +297,147 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const loginWithGoogle = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const firebaseUser = result.user;
+      
+      // Extract name from Google profile
+      const displayName = firebaseUser.displayName || '';
+      const nameParts = displayName.split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
+      // Create user in backend database if doesn't exist
+      try {
+        const idToken = await firebaseUser.getIdToken();
+        
+        // Try to get user first
+        try {
+          await api.getUser(firebaseUser.uid, idToken);
+        } catch (getUserError: any) {
+        // User doesn't exist, create them
+        if (getUserError.message.includes('not found') || getUserError.message.includes('404')) {
+          await api.createUser({
+            firebase_uid: firebaseUser.uid,
+            email: firebaseUser.email || '',
+            username: firebaseUser.email?.split('@')[0] || '',
+            first_name: firstName,
+            last_name: lastName,
+          }, idToken);
+          
+          // Create a parent profile first (required for creating children)
+          try {
+            await api.createParentProfile({
+              age: undefined,
+              location: undefined,
+              parenting_style: undefined,
+              concerns: undefined,
+              goals: undefined,
+              experience_level: undefined,
+              family_structure: undefined,
+            }, firebaseUser.uid, idToken);
+          } catch (parentError: any) {
+            console.error('Failed to create parent profile:', parentError);
+          }
+          
+          // Create a sample child for new users
+          try {
+            await api.createChild({
+              name: 'Sample Child',
+              age: 5,
+              gender: 'Other',
+              hobbies: ['Reading', 'Drawing'],
+              interests: ['Science', 'Art'],
+              personality_traits: ['Curious', 'Creative'],
+              school_grade: 'Kindergarten',
+            }, firebaseUser.uid, idToken);
+          } catch (childError: any) {
+            console.error('Failed to create sample child:', childError);
+          }
+        }
+        }
+      } catch (backendError: any) {
+        console.error('Failed to create user in backend:', backendError);
+        // Don't throw error here as Firebase auth was successful
+      }
+    } catch (error: any) {
+      throw new Error(error.message);
+    }
+  };
+
+  const sendPhoneVerificationCode = async (phoneNumber: string, recaptchaVerifier: RecaptchaVerifier): Promise<ConfirmationResult> => {
+    try {
+      const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
+      return confirmationResult;
+    } catch (error: any) {
+      throw new Error(error.message);
+    }
+  };
+
+  const verifyPhoneCode = async (confirmationResult: ConfirmationResult, code: string) => {
+    try {
+      const result = await confirmationResult.confirm(code);
+      const firebaseUser = result.user;
+      
+      // Create user in backend database if doesn't exist
+      try {
+        const idToken = await firebaseUser.getIdToken();
+        // Try to get user first
+        try {
+          await api.getUser(firebaseUser.uid, idToken);
+        } catch (getUserError: any) {
+        // User doesn't exist, create them
+        if (getUserError.message.includes('not found') || getUserError.message.includes('404')) {
+          await api.createUser({
+            firebase_uid: firebaseUser.uid,
+            email: firebaseUser.email || firebaseUser.phoneNumber || '',
+            username: firebaseUser.phoneNumber?.replace(/[^0-9]/g, '') || '',
+            first_name: '',
+            last_name: '',
+          }, idToken);
+          
+          // Create a parent profile first (required for creating children)
+          try {
+            await api.createParentProfile({
+              age: undefined,
+              location: undefined,
+              parenting_style: undefined,
+              concerns: undefined,
+              goals: undefined,
+              experience_level: undefined,
+              family_structure: undefined,
+            }, firebaseUser.uid, idToken);
+          } catch (parentError) {
+            console.error('Failed to create parent profile:', parentError);
+          }
+          
+          // Create a sample child for new users
+          try {
+            await api.createChild({
+              name: 'Sample Child',
+              age: 5,
+              gender: 'Other',
+              hobbies: ['Reading', 'Drawing'],
+              interests: ['Science', 'Art'],
+              personality_traits: ['Curious', 'Creative'],
+              school_grade: 'Kindergarten',
+            }, firebaseUser.uid, idToken);
+          } catch (childError) {
+            console.error('Failed to create sample child:', childError);
+          }
+        }
+        }
+      } catch (backendError) {
+        console.error('Failed to create user in backend:', backendError);
+        // Don't throw error here as Firebase auth was successful
+      }
+    } catch (error: any) {
+      throw new Error(error.message);
+    }
+  };
+
   const value: AuthContextType = {
     isAuthenticated,
     isLoading,
@@ -179,6 +445,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     firebaseUser,
     login,
     signup,
+    loginWithGoogle,
+    sendPhoneVerificationCode,
+    verifyPhoneCode,
     logout,
     resetPassword,
     token,

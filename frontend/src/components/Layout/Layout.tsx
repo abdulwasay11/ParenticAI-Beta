@@ -26,9 +26,13 @@ import {
   History,
   Menu as MenuIcon,
   Logout,
+  Settings,
+  Brightness4,
+  Brightness7,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useThemeMode } from '../../contexts/ThemeContext';
 
 // TypeScript interfaces
 interface LayoutProps {
@@ -60,6 +64,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
+  const { mode, toggleMode } = useThemeMode();
 
   const handleDrawerToggle = (): void => {
     setMobileOpen(!mobileOpen);
@@ -150,6 +155,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             Welcome to ParenticAI!
           </Typography>
+          <IconButton
+            color="inherit"
+            onClick={toggleMode}
+            sx={{ mr: 1 }}
+            aria-label="toggle dark mode"
+          >
+            {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+          </IconButton>
+          <IconButton
+            color="inherit"
+            onClick={() => navigate('/account-settings')}
+            sx={{ mr: 1 }}
+            aria-label="account settings"
+          >
+            <Settings />
+          </IconButton>
           <Button
             startIcon={<Logout />}
             onClick={logout}

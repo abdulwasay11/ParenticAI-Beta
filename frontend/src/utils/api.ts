@@ -1,22 +1,37 @@
-export const API_BASE =
-  process.env.REACT_APP_API_URL || `${window.location.origin.replace(/\/$/, '')}/api`;
+// Use relative paths by default for Vercel deployment
+// Only use REACT_APP_API_URL if explicitly set (for local development with separate backend)
+export const API_BASE = process.env.REACT_APP_API_URL || '/api';
 
 export const getApiUrl = (path: string): string => {
   if (path.startsWith('/')) {
     path = path.substring(1);
   }
-  return `${API_BASE}/${path}`;
+  // If API_BASE already ends with /, don't add another one
+  const base = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
+  return `${base}/${path}`;
+};
+
+// Helper to get auth headers
+const getAuthHeaders = (token?: string | null): HeadersInit => {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
 };
 
 // Types for API requests and responses
 export interface User {
   id: number;
-  keycloak_id: string;
+  firebase_uid: string;
   email: string;
-  username: string;
+  username?: string;
   first_name?: string;
   last_name?: string;
-  is_active: boolean;
+  phone?: string;
+  subscription_tier?: 'free' | 'parent' | 'family';
   created_at: string;
   updated_at?: string;
 }
@@ -30,7 +45,18 @@ export interface Parent {
   concerns?: string;
   goals?: string;
   experience_level?: string;
-  family_structure?: string;
+  family_structure?: 'single' | 'couple';
+  preferred_language?: string;
+  photo_url?: string;
+  partner_first_name?: string;
+  partner_last_name?: string;
+  partner_email?: string;
+  partner_phone?: string;
+  parenting_score?: number;
+  improvement_areas?: string[];
+  strengths?: string[];
+  children_count?: number;
+  avg_assessment_score?: number;
   created_at: string;
   updated_at?: string;
 }
@@ -69,24 +95,49 @@ export interface ChildOptions {
 export const api = {
   // User management
   async createUser(userData: {
-    keycloak_id: string;
+    firebase_uid: string;
     email: string;
-    username: string;
+    username?: string;
     first_name?: string;
     last_name?: string;
-  }): Promise<User> {
+  }, token?: string | null): Promise<User> {
     const response = await fetch(getApiUrl('users'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(token),
       body: JSON.stringify(userData),
     });
-    if (!response.ok) throw new Error('Failed to create user');
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to create user');
+    }
     return response.json();
   },
 
-  async getUser(keycloakId: string): Promise<User> {
-    const response = await fetch(getApiUrl(`users/${keycloakId}`));
-    if (!response.ok) throw new Error('Failed to get user');
+  async getUser(firebaseUid: string, token?: string | null): Promise<User> {
+    const response = await fetch(getApiUrl(`users?firebase_uid=${firebaseUid}`), {
+      headers: getAuthHeaders(token),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to get user');
+    }
+    return response.json();
+  },
+
+  async updateUser(userData: {
+    email?: string;
+    phone?: string;
+    subscription_tier?: 'free' | 'parent' | 'family';
+  }, firebaseUid: string, token?: string | null): Promise<User> {
+    const response = await fetch(getApiUrl('users'), {
+      method: 'PUT',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ ...userData, firebase_uid: firebaseUid }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to update user');
+    }
     return response.json();
   },
 
@@ -98,20 +149,61 @@ export const api = {
     concerns?: string;
     goals?: string;
     experience_level?: string;
-    family_structure?: string;
-  }, keycloakId: string): Promise<Parent> {
+    family_structure?: 'single' | 'couple';
+    preferred_language?: string;
+    photo_url?: string;
+    partner_first_name?: string;
+    partner_last_name?: string;
+    partner_email?: string;
+    partner_phone?: string;
+  }, firebaseUid: string, token?: string | null): Promise<Parent> {
     const response = await fetch(getApiUrl('parents'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...parentData, keycloak_id: keycloakId }),
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ ...parentData, firebase_uid: firebaseUid }),
     });
-    if (!response.ok) throw new Error('Failed to create parent profile');
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to create parent profile');
+    }
     return response.json();
   },
 
-  async getParentProfile(keycloakId: string): Promise<Parent> {
-    const response = await fetch(getApiUrl(`parents/${keycloakId}`));
-    if (!response.ok) throw new Error('Failed to get parent profile');
+  async getParentProfile(firebaseUid: string, token?: string | null): Promise<Parent> {
+    const response = await fetch(getApiUrl(`parents?firebase_uid=${firebaseUid}`), {
+      headers: getAuthHeaders(token),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to get parent profile');
+    }
+    return response.json();
+  },
+
+  async updateParentProfile(parentData: {
+    age?: number;
+    location?: string;
+    parenting_style?: string;
+    concerns?: string;
+    goals?: string;
+    experience_level?: string;
+    family_structure?: 'single' | 'couple';
+    preferred_language?: string;
+    photo_url?: string;
+    partner_first_name?: string;
+    partner_last_name?: string;
+    partner_email?: string;
+    partner_phone?: string;
+  }, firebaseUid: string, token?: string | null): Promise<Parent> {
+    const response = await fetch(getApiUrl('parents'), {
+      method: 'PUT',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ ...parentData, firebase_uid: firebaseUid }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to update parent profile');
+    }
     return response.json();
   },
 
@@ -132,19 +224,27 @@ export const api = {
     favorite_activities?: string[];
     challenges?: string;
     achievements?: string;
-  }, keycloakId: string): Promise<Child> {
+  }, firebaseUid: string, token?: string | null): Promise<Child> {
     const response = await fetch(getApiUrl('children'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...childData, keycloak_id: keycloakId }),
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ ...childData, firebase_uid: firebaseUid }),
     });
-    if (!response.ok) throw new Error('Failed to create child');
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to create child');
+    }
     return response.json();
   },
 
-  async getChildren(keycloakId: string): Promise<Child[]> {
-    const response = await fetch(getApiUrl(`children/${keycloakId}`));
-    if (!response.ok) throw new Error('Failed to get children');
+  async getChildren(firebaseUid: string, token?: string | null): Promise<Child[]> {
+    const response = await fetch(getApiUrl(`children?firebase_uid=${firebaseUid}`), {
+      headers: getAuthHeaders(token),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to get children');
+    }
     return response.json();
   },
 
@@ -164,23 +264,29 @@ export const api = {
     favorite_activities?: string[];
     challenges?: string;
     achievements?: string;
-  }, keycloakId: string): Promise<Child> {
-    const response = await fetch(getApiUrl(`children/${childId}`), {
+  }, firebaseUid: string, token?: string | null): Promise<Child> {
+    const response = await fetch(getApiUrl('children'), {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...childData, keycloak_id: keycloakId }),
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ ...childData, child_id: childId, firebase_uid: firebaseUid }),
     });
-    if (!response.ok) throw new Error('Failed to update child');
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to update child');
+    }
     return response.json();
   },
 
-  async deleteChild(childId: number, keycloakId: string): Promise<void> {
-    const response = await fetch(getApiUrl(`children/${childId}`), {
+  async deleteChild(childId: number, firebaseUid: string, token?: string | null): Promise<void> {
+    const response = await fetch(getApiUrl('children'), {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keycloak_id: keycloakId }),
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ child_id: childId, firebase_uid: firebaseUid }),
     });
-    if (!response.ok) throw new Error('Failed to delete child');
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to delete child');
+    }
   },
 
   // Options for dropdowns
@@ -190,14 +296,206 @@ export const api = {
     return response.json();
   },
 
-  // Chat functionality
+  // Personality Assessment
+  async createPersonalityAssessment(assessmentData: {
+    child_id: number;
+    image_url?: string;
+    quiz_data?: any;
+    ai_analysis?: any;
+    traits?: string[];
+    recommendations?: string[];
+    confidence_score?: number;
+  }, firebaseUid: string, token?: string | null): Promise<any> {
+    const response = await fetch(getApiUrl('personality-assessment'), {
+      method: 'POST',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ ...assessmentData, firebase_uid: firebaseUid }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to create personality assessment');
+    }
+    return response.json();
+  },
+
+  async getPersonalityAssessments(firebaseUid: string, childId?: number, token?: string | null): Promise<any[]> {
+    const url = childId 
+      ? getApiUrl(`personality-assessment?firebase_uid=${firebaseUid}&child_id=${childId}`)
+      : getApiUrl(`personality-assessment?firebase_uid=${firebaseUid}`);
+    const response = await fetch(url, {
+      headers: getAuthHeaders(token),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to get personality assessments');
+    }
+    return response.json();
+  },
+
+  // Parent Tracking
+  async recordParentActivity(activityData: {
+    interactions_count?: number;
+    questions_asked?: number;
+    advice_followed?: number;
+    improvement_notes?: string;
+  }, firebaseUid: string, token?: string | null): Promise<any> {
+    const response = await fetch(getApiUrl('parent-tracking'), {
+      method: 'POST',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ ...activityData, firebase_uid: firebaseUid }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to record parent activity');
+    }
+    return response.json();
+  },
+
+  async getParentTracking(firebaseUid: string, days?: number, token?: string | null): Promise<any> {
+    const url = days
+      ? getApiUrl(`parent-tracking?firebase_uid=${firebaseUid}&days=${days}`)
+      : getApiUrl(`parent-tracking?firebase_uid=${firebaseUid}`);
+    const response = await fetch(url, {
+      headers: getAuthHeaders(token),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to get parent tracking');
+    }
+    return response.json();
+  },
+
+  // Chat functionality - using Vercel serverless function as proxy
   async sendChatMessage(message: string, childContext: string[] = []): Promise<{ response: string; timestamp: string }> {
-    const response = await fetch(getApiUrl('chat'), {
+    const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, child_context: childContext }),
+      body: JSON.stringify({ message, childContext }),
     });
-    if (!response.ok) throw new Error('Failed to send chat message');
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Failed to send chat message: ${response.status}`);
+    }
+    
+    return response.json();
+  },
+
+  // Streaming chat functionality
+  async sendChatMessageStream(
+    message: string, 
+    childContext: string[] = [],
+    onChunk: (chunk: string) => void,
+    onComplete: () => void,
+    onError: (error: Error) => void,
+    firebaseUid?: string | null,
+    childId?: number | null
+  ): Promise<void> {
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          message, 
+          childContext,
+          firebase_uid: firebaseUid || null,
+          child_id: childId || null
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to send chat message: ${response.status}`);
+      }
+
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('Streaming not supported');
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            
+            try {
+              const parsed = JSON.parse(data);
+              
+              if (parsed.error) {
+                onError(new Error(parsed.error));
+                return;
+              }
+              
+              if (parsed.chunk) {
+                onChunk(parsed.chunk);
+              }
+              
+              if (parsed.done) {
+                onComplete();
+                return;
+              }
+            } catch (e) {
+              // Skip invalid JSON
+              continue;
+            }
+          }
+        }
+      }
+      
+      onComplete();
+    } catch (error) {
+      onError(error instanceof Error ? error : new Error('Unknown error'));
+    }
+  },
+
+  // Dashboard stats
+  async getDashboardStats(firebaseUid: string, token?: string | null): Promise<{
+    childrenCount: number;
+    chatCount: number;
+    assessmentsCount: number;
+    daysActive: number;
+  }> {
+    const response = await fetch(getApiUrl(`dashboard/stats?firebase_uid=${firebaseUid}`), {
+      headers: getAuthHeaders(token),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to get dashboard stats');
+    }
+    return response.json();
+  },
+
+  // Chat history
+  async getChatHistory(firebaseUid: string, childId?: number | null, limit: number = 50, token?: string | null): Promise<Array<{
+    id: number;
+    message: string;
+    response: string;
+    child_id: number | null;
+    timestamp: string;
+  }>> {
+    const params = new URLSearchParams({ firebase_uid: firebaseUid, limit: limit.toString() });
+    if (childId) {
+      params.append('child_id', childId.toString());
+    }
+    const response = await fetch(getApiUrl(`chat-history?${params.toString()}`), {
+      headers: getAuthHeaders(token),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to get chat history');
+    }
     return response.json();
   },
 }; 

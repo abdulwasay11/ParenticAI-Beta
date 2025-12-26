@@ -9,19 +9,26 @@ interface FormattedMessageProps {
 const FormattedMessage: React.FC<FormattedMessageProps> = ({ text, variant = 'body1' }) => {
   // Function to format the text with proper line breaks and styling
   const formatText = (text: string) => {
-    // Split by double line breaks to create paragraphs
-    const paragraphs = text.split('\n\n');
-    
-    return paragraphs.map((paragraph, index) => {
-      // Handle numbered lists (lines starting with numbers)
-      if (/^\d+\./.test(paragraph.trim())) {
-        const lines = paragraph.split('\n');
-        return (
-          <Box key={index} sx={{ mb: 1 }}>
-            {lines.map((line, lineIndex) => {
+    // First, split by lines to handle headers and lists
+    const lines = text.split('\n');
+    const elements: React.ReactElement[] = [];
+    let currentParagraph: string[] = [];
+    let keyIndex = 0;
+
+    const flushParagraph = () => {
+      if (currentParagraph.length === 0) return;
+      
+      const paragraphText = currentParagraph.join('\n').trim();
+      if (!paragraphText) return;
+
+      // Check if it's a numbered list
+      if (/^\d+\./.test(paragraphText.trim())) {
+        const listLines = paragraphText.split('\n');
+        elements.push(
+          <Box key={keyIndex++} sx={{ mb: 1 }}>
+            {listLines.map((line, lineIndex) => {
               const trimmedLine = line.trim();
               if (/^\d+\./.test(trimmedLine)) {
-                // Remove the number and dot, then format as list item
                 const content = trimmedLine.replace(/^\d+\.\s*/, '');
                 return (
                   <Box key={lineIndex} sx={{ display: 'flex', mb: 0.5 }}>
@@ -43,13 +50,12 @@ const FormattedMessage: React.FC<FormattedMessageProps> = ({ text, variant = 'bo
           </Box>
         );
       }
-      
-      // Handle bullet points or lines starting with special characters
-      if (/^[•\-\*]/.test(paragraph.trim())) {
-        const lines = paragraph.split('\n');
-        return (
-          <Box key={index} sx={{ mb: 1 }}>
-            {lines.map((line, lineIndex) => {
+      // Check if it's a bullet list
+      else if (/^[•\-\*]/.test(paragraphText.trim())) {
+        const listLines = paragraphText.split('\n');
+        elements.push(
+          <Box key={keyIndex++} sx={{ mb: 1 }}>
+            {listLines.map((line, lineIndex) => {
               const trimmedLine = line.trim();
               if (/^[•\-\*]/.test(trimmedLine)) {
                 const content = trimmedLine.replace(/^[•\-\*]\s*/, '');
@@ -73,17 +79,67 @@ const FormattedMessage: React.FC<FormattedMessageProps> = ({ text, variant = 'bo
           </Box>
         );
       }
-      
       // Regular paragraph
-      return (
-        <Typography key={index} variant={variant} sx={{ mb: 1 }}>
-          {formatInlineText(paragraph)}
-        </Typography>
-      );
-    });
+      else {
+        elements.push(
+          <Typography key={keyIndex++} variant={variant} sx={{ mb: 1 }}>
+            {formatInlineText(paragraphText)}
+          </Typography>
+        );
+      }
+      currentParagraph = [];
+    };
+
+    // Process lines
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      
+      // Check for markdown headers (## or ###)
+      if (/^###\s+/.test(trimmedLine)) {
+        flushParagraph();
+        const headerText = trimmedLine.replace(/^###\s+/, '');
+        elements.push(
+          <Typography
+            key={keyIndex++}
+            variant="subtitle1"
+            component="div"
+            sx={{ fontWeight: 'bold', mt: 1.5, mb: 0.5 }}
+          >
+            {formatInlineText(headerText)}
+          </Typography>
+        );
+      }
+      else if (/^##\s+/.test(trimmedLine)) {
+        flushParagraph();
+        const headerText = trimmedLine.replace(/^##\s+/, '');
+        elements.push(
+          <Typography
+            key={keyIndex++}
+            variant="h6"
+            component="div"
+            sx={{ fontWeight: 'bold', mt: 2, mb: 1 }}
+          >
+            {formatInlineText(headerText)}
+          </Typography>
+        );
+      }
+      // Empty line - flush current paragraph
+      else if (trimmedLine === '') {
+        flushParagraph();
+      }
+      // Regular line - add to current paragraph
+      else {
+        currentParagraph.push(line);
+      }
+    }
+    
+    // Flush any remaining paragraph
+    flushParagraph();
+    
+    return elements;
   };
 
-  // Function to format inline text (bold, etc.)
+  // Function to format inline text (bold, italic, etc.)
   const formatInlineText = (text: string) => {
     // Handle bold text (**text**)
     const parts = text.split(/(\*\*.*?\*\*)/g);

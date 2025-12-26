@@ -1,0 +1,106 @@
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":true},"timestamp":1766788465445,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":false},"timestamp":1766788465530,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:106","message":"Setting isAuthenticated to false","data":{},"timestamp":1766788465530,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":false},"timestamp":1766788465530,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":false},"timestamp":1766788465572,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"LoginPage.tsx:100","message":"handleGoogleSignIn called","data":{},"timestamp":1766788474064,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"AuthContext.tsx:218","message":"loginWithGoogle called","data":{},"timestamp":1766788474065,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":true},"timestamp":1766788474699,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":false},"timestamp":1766788474716,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:106","message":"Setting isAuthenticated to false","data":{},"timestamp":1766788474716,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":false},"timestamp":1766788474717,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":false},"timestamp":1766788474766,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"LoginPage.tsx:100","message":"handleGoogleSignIn called","data":{},"timestamp":1766788479759,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"AuthContext.tsx:218","message":"loginWithGoogle called","data":{},"timestamp":1766788479759,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":true},"timestamp":1766788480139,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":false},"timestamp":1766788480155,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:106","message":"Setting isAuthenticated to false","data":{},"timestamp":1766788480155,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":false},"timestamp":1766788480155,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":false},"timestamp":1766788480200,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":true},"timestamp":1766788507177,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":false},"timestamp":1766788507197,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:106","message":"Setting isAuthenticated to false","data":{},"timestamp":1766788507197,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":false},"timestamp":1766788507197,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":false},"timestamp":1766788507241,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":true},"timestamp":1766789177013,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":false},"timestamp":1766789177023,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:106","message":"Setting isAuthenticated to false","data":{},"timestamp":1766789177024,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":false},"timestamp":1766789177024,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":false},"timestamp":1766789177071,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":true,"firebaseUid":"SglGtYqjWsh7BXnVxpZT9SMlzau1"},"timestamp":1766789186808,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:65","message":"Setting isAuthenticated to true","data":{"firebaseUid":"SglGtYqjWsh7BXnVxpZT9SMlzau1"},"timestamp":1766789186809,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":true},"timestamp":1766789214619,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":false},"timestamp":1766789270468,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:106","message":"Setting isAuthenticated to false","data":{},"timestamp":1766789270468,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":false},"timestamp":1766789270468,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":false},"timestamp":1766789270483,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":true,"firebaseUid":"y5hKe2glgJbCVK5VtgpwR5uI6Oi2"},"timestamp":1766789294523,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:65","message":"Setting isAuthenticated to true","data":{"firebaseUid":"y5hKe2glgJbCVK5VtgpwR5uI6Oi2"},"timestamp":1766789294524,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"App.tsx:139","message":"PublicRoute redirecting authenticated user to dashboard","data":{},"timestamp":1766789294530,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":true,"isLoading":false},"timestamp":1766789294532,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":true},"timestamp":1766789322251,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":false},"timestamp":1766789346647,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:106","message":"Setting isAuthenticated to false","data":{},"timestamp":1766789346647,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":false},"timestamp":1766789346647,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":false},"timestamp":1766789346664,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":true,"firebaseUid":"fRGXax7jdffMIJar20YstBhUkSQ2"},"timestamp":1766789366568,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:65","message":"Setting isAuthenticated to true","data":{"firebaseUid":"fRGXax7jdffMIJar20YstBhUkSQ2"},"timestamp":1766789366569,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"App.tsx:139","message":"PublicRoute redirecting authenticated user to dashboard","data":{},"timestamp":1766789366573,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":true,"isLoading":false},"timestamp":1766789366575,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":true},"timestamp":1766789402370,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":true},"timestamp":1766789981303,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":true,"firebaseUid":"fRGXax7jdffMIJar20YstBhUkSQ2"},"timestamp":1766789981888,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:65","message":"Setting isAuthenticated to true","data":{"firebaseUid":"fRGXax7jdffMIJar20YstBhUkSQ2"},"timestamp":1766789981888,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"ensureUserInBackend called","data":{"firebaseUid":"fRGXax7jdffMIJar20YstBhUkSQ2","hasEmail":true},"timestamp":1766789981888,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":true,"isLoading":true},"timestamp":1766789981891,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"User not found, creating user","data":{},"timestamp":1766789983160,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"User created in backend","data":{},"timestamp":1766789983497,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"Parent profile not found, creating","data":{},"timestamp":1766789984202,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"Parent profile created","data":{},"timestamp":1766789984506,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"Children fetched","data":{"childrenCount":0},"timestamp":1766789985202,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"No children or sample child missing, creating sample child","data":{"hasSampleChild":false,"childrenCount":0},"timestamp":1766789985202,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"Sample child created","data":{},"timestamp":1766789985511,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"ensureUserInBackend completed successfully","data":{},"timestamp":1766789985512,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":true},"timestamp":1766790015091,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"App.tsx:139","message":"PublicRoute redirecting authenticated user to dashboard","data":{},"timestamp":1766790015092,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":true,"isLoading":false},"timestamp":1766790015094,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":true,"firebaseUid":"fRGXax7jdffMIJar20YstBhUkSQ2"},"timestamp":1766790055551,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:65","message":"Setting isAuthenticated to true","data":{"firebaseUid":"fRGXax7jdffMIJar20YstBhUkSQ2"},"timestamp":1766790055552,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"ensureUserInBackend called","data":{"firebaseUid":"fRGXax7jdffMIJar20YstBhUkSQ2","hasEmail":true},"timestamp":1766790055552,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"User exists in backend","data":{},"timestamp":1766790055885,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"Parent profile exists","data":{},"timestamp":1766790056226,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"Children fetched","data":{"childrenCount":1},"timestamp":1766790056567,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"Sample child already exists","data":{},"timestamp":1766790056567,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"ensureUserInBackend completed successfully","data":{},"timestamp":1766790056567,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":true},"timestamp":1766790090094,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":false},"timestamp":1766790118891,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:106","message":"Setting isAuthenticated to false","data":{},"timestamp":1766790118892,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":false},"timestamp":1766790118892,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":false},"timestamp":1766790118919,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":false},"timestamp":1766790133094,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:106","message":"Setting isAuthenticated to false","data":{},"timestamp":1766790133095,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":false},"timestamp":1766790133095,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":false},"timestamp":1766790133120,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":true,"firebaseUid":"XvqdJEA6oDZTF4lVnLvSda2KqtL2"},"timestamp":1766790143989,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:65","message":"Setting isAuthenticated to true","data":{"firebaseUid":"XvqdJEA6oDZTF4lVnLvSda2KqtL2"},"timestamp":1766790143989,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"ensureUserInBackend called","data":{"firebaseUid":"XvqdJEA6oDZTF4lVnLvSda2KqtL2","hasEmail":true},"timestamp":1766790143989,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":true,"isLoading":false},"timestamp":1766790143997,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"App.tsx:139","message":"PublicRoute redirecting authenticated user to dashboard","data":{},"timestamp":1766790143994,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"User not found, creating user","data":{},"timestamp":1766790144304,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"User created in backend","data":{},"timestamp":1766790144589,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"Parent profile not found, creating","data":{},"timestamp":1766790144902,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"Parent profile created","data":{},"timestamp":1766790145184,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"Children fetched","data":{"childrenCount":0},"timestamp":1766790145493,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"No children or sample child missing, creating sample child","data":{"hasSampleChild":false,"childrenCount":0},"timestamp":1766790145494,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"Sample child created","data":{},"timestamp":1766790145780,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:ensureUserInBackend","message":"ensureUserInBackend completed successfully","data":{},"timestamp":1766790145781,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":true},"timestamp":1766790171492,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":true,"firebaseUid":"XvqdJEA6oDZTF4lVnLvSda2KqtL2"},"timestamp":1766790193095,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:65","message":"Setting isAuthenticated to true","data":{"firebaseUid":"XvqdJEA6oDZTF4lVnLvSda2KqtL2"},"timestamp":1766790193096,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":true,"isLoading":false},"timestamp":1766790193099,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"App.tsx:139","message":"PublicRoute redirecting authenticated user to dashboard","data":{},"timestamp":1766790193097,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":true},"timestamp":1766790233092,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":false},"timestamp":1766791713823,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":true,"firebaseUid":"SglGtYqjWsh7BXnVxpZT9SMlzau1"},"timestamp":1766791753131,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:65","message":"Setting isAuthenticated to true","data":{"firebaseUid":"SglGtYqjWsh7BXnVxpZT9SMlzau1"},"timestamp":1766791753134,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":true},"timestamp":1766791796125,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
