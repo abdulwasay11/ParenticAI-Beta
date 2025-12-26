@@ -35,7 +35,7 @@ module.exports = async function handler(request, response) {
       return response.status(400).json({ error: 'Message is required and must be a string' });
     }
 
-    // Get parent_id from firebase_uid if provided (for saving chat history)
+    // Get parent_id from firebase_uid if provided (for saving chat history and loading conversation context)
     let parent_id = null;
     if (firebase_uid) {
       try {
@@ -53,6 +53,49 @@ module.exports = async function handler(request, response) {
       }
     }
 
+    // Load conversation history for context (last 10 messages)
+    let conversationHistory = [];
+    if (parent_id) {
+      try {
+        let historyQuery;
+        let historyParams;
+        
+        if (child_id) {
+          historyQuery = `
+            SELECT message, response
+            FROM chat_history
+            WHERE parent_id = $1 AND child_id = $2
+            ORDER BY created_at DESC
+            LIMIT 10
+          `;
+          historyParams = [parent_id, parseInt(child_id)];
+        } else {
+          historyQuery = `
+            SELECT message, response
+            FROM chat_history
+            WHERE parent_id = $1 AND child_id IS NULL
+            ORDER BY created_at DESC
+            LIMIT 10
+          `;
+          historyParams = [parent_id];
+        }
+        
+        const historyResult = await query(historyQuery, historyParams);
+        // Reverse to get chronological order (oldest first), then build conversation pairs
+        const reversedRows = historyResult.rows.reverse();
+        conversationHistory = reversedRows.flatMap(row => [
+          { role: 'user', content: row.message },
+          { role: 'assistant', content: row.response }
+        ]).filter(msg => msg.content && msg.content.trim()); // Remove empty messages
+      } catch (historyError) {
+        // Handle case where table doesn't exist yet
+        if (historyError.code !== '42P01') {
+          console.error('Error loading conversation history:', historyError);
+        }
+        // Continue without history if query fails
+      }
+    }
+
     // Build system prompt
     // For anonymous users (no child context), provide concise responses
     // For signed-in users with child context, provide detailed responses
@@ -66,6 +109,13 @@ module.exports = async function handler(request, response) {
       systemPrompt += `\n\nContext about the child(ren): ${childContext.join(', ')}`;
       systemPrompt += ' Provide detailed, comprehensive advice tailored to the child\'s context.';
     }
+
+    // Build messages array with conversation history
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...conversationHistory,
+      { role: 'user', content: message }
+    ];
 
     // Set headers for streaming response
     response.setHeader('Content-Type', 'text/event-stream');
@@ -81,10 +131,7 @@ module.exports = async function handler(request, response) {
       },
       body: JSON.stringify({
         model: 'deepseek-chat',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: message }
-        ],
+        messages: messages,
         stream: true, // Enable streaming
         temperature: 0.7,
         max_tokens: 2000

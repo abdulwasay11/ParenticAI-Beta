@@ -439,4 +439,26 @@ export const api = {
     }
     return response.json();
   },
+
+  // Chat history
+  async getChatHistory(firebaseUid: string, childId?: number | null, limit: number = 50, token?: string | null): Promise<Array<{
+    id: number;
+    message: string;
+    response: string;
+    child_id: number | null;
+    timestamp: string;
+  }>> {
+    const params = new URLSearchParams({ firebase_uid: firebaseUid, limit: limit.toString() });
+    if (childId) {
+      params.append('child_id', childId.toString());
+    }
+    const response = await fetch(getApiUrl(`chat-history?${params.toString()}`), {
+      headers: getAuthHeaders(token),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to get chat history');
+    }
+    return response.json();
+  },
 }; 

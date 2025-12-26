@@ -117,6 +117,59 @@ const ChatPage: React.FC = () => {
     loadChildren();
   }, [firebaseUser, token]);
 
+  // Load chat history when child selection changes (only after children are loaded)
+  useEffect(() => {
+    const loadHistory = async () => {
+      if (!firebaseUser?.uid || !token || loadingChildren) return;
+      
+      try {
+        const selectedChild = selectedChildId === 'generic' 
+          ? null 
+          : children.find(c => c.id.toString() === selectedChildId);
+        
+        const history = await api.getChatHistory(
+          firebaseUser.uid, 
+          selectedChild?.id || null, 
+          50, 
+          token
+        );
+        
+        // Convert history to Message format
+        const historyMessages: Message[] = history.flatMap((item) => [
+          {
+            id: `history-user-${item.id}`,
+            text: item.message,
+            sender: 'user' as const,
+            timestamp: new Date(item.timestamp)
+          },
+          {
+            id: `history-ai-${item.id}`,
+            text: item.response,
+            sender: 'ai' as const,
+            timestamp: new Date(item.timestamp)
+          }
+        ]);
+        
+        // Replace messages with history, or show welcome message if no history
+        if (historyMessages.length > 0) {
+          setMessages(historyMessages);
+        } else {
+          setMessages([{
+            id: '1',
+            text: 'Hello! I\'m your AI parenting assistant. How can I help you today?',
+            sender: 'ai',
+            timestamp: new Date()
+          }]);
+        }
+      } catch (historyError) {
+        console.error('Error loading chat history:', historyError);
+        // Keep current messages if history fails to load
+      }
+    };
+    
+    loadHistory();
+  }, [firebaseUser, token, selectedChildId, children, loadingChildren]);
+
   // Create sample child for new users (only if no children exist and no sample child already exists)
   const createSampleChild = async () => {
     if (!firebaseUser?.uid || !token) return;

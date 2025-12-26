@@ -1,0 +1,24 @@
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":true},"timestamp":1766788465445,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":false},"timestamp":1766788465530,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:106","message":"Setting isAuthenticated to false","data":{},"timestamp":1766788465530,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":false},"timestamp":1766788465530,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":false},"timestamp":1766788465572,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"LoginPage.tsx:100","message":"handleGoogleSignIn called","data":{},"timestamp":1766788474064,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"AuthContext.tsx:218","message":"loginWithGoogle called","data":{},"timestamp":1766788474065,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":true},"timestamp":1766788474699,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":false},"timestamp":1766788474716,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:106","message":"Setting isAuthenticated to false","data":{},"timestamp":1766788474716,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":false},"timestamp":1766788474717,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":false},"timestamp":1766788474766,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"LoginPage.tsx:100","message":"handleGoogleSignIn called","data":{},"timestamp":1766788479759,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"AuthContext.tsx:218","message":"loginWithGoogle called","data":{},"timestamp":1766788479759,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":true},"timestamp":1766788480139,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":false},"timestamp":1766788480155,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:106","message":"Setting isAuthenticated to false","data":{},"timestamp":1766788480155,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":false},"timestamp":1766788480155,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":false},"timestamp":1766788480200,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":true},"timestamp":1766788507177,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"AuthContext.tsx:60","message":"onAuthStateChanged fired","data":{"hasFirebaseUser":false},"timestamp":1766788507197,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:106","message":"Setting isAuthenticated to false","data":{},"timestamp":1766788507197,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"AuthContext.tsx:115","message":"Setting isLoading to false","data":{"isAuthenticated":false},"timestamp":1766788507197,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"App.tsx:121","message":"PublicRoute render","data":{"isAuthenticated":false,"isLoading":false},"timestamp":1766788507241,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
