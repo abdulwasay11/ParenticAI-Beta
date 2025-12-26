@@ -12,6 +12,7 @@ import {
   Alert,
   CircularProgress
 } from '@mui/material';
+import { ArrowBack } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -222,6 +223,16 @@ const LoginPage: React.FC = () => {
                 >
                   Forgot Password?
                 </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<ArrowBack />}
+                  onClick={() => navigate('/')}
+                  disabled={loading}
+                  sx={{ mb: 1 }}
+                >
+                  Cancel
+                </Button>
               </Box>
             </TabPanel>
 
@@ -281,6 +292,16 @@ const LoginPage: React.FC = () => {
                   }}
                 >
                   {loading ? <CircularProgress size={24} /> : 'Sign Up'}
+                </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<ArrowBack />}
+                  onClick={() => navigate('/')}
+                  disabled={loading}
+                  sx={{ mb: 1 }}
+                >
+                  Cancel
                 </Button>
               </Box>
             </TabPanel>

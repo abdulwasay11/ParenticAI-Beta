@@ -1,11 +1,14 @@
-export const API_BASE =
-  process.env.REACT_APP_API_URL || `${window.location.origin.replace(/\/$/, '')}/api`;
+// Use relative paths by default for Vercel deployment
+// Only use REACT_APP_API_URL if explicitly set (for local development with separate backend)
+export const API_BASE = process.env.REACT_APP_API_URL || '/api';
 
 export const getApiUrl = (path: string): string => {
   if (path.startsWith('/')) {
     path = path.substring(1);
   }
-  return `${API_BASE}/${path}`;
+  // If API_BASE already ends with /, don't add another one
+  const base = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
+  return `${base}/${path}`;
 };
 
 // Helper to get auth headers
