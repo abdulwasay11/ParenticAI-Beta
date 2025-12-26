@@ -7,16 +7,30 @@ function getPool() {
   if (!pool) {
     const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
     
+    // #region agent log
+    console.log('[db.js] getPool called', { hasDatabaseUrl: !!process.env.DATABASE_URL, hasPostgresUrl: !!process.env.POSTGRES_URL, hasConnectionString: !!connectionString });
+    // #endregion
+    
     if (!connectionString) {
-      throw new Error('DATABASE_URL or POSTGRES_URL environment variable is not set');
+      const error = new Error('DATABASE_URL or POSTGRES_URL environment variable is not set');
+      console.error('[db.js] Database connection error:', error.message);
+      throw error;
     }
 
+    // #region agent log
+    console.log('[db.js] Creating database pool');
+    // #endregion
+    
     pool = new Pool({
       connectionString: connectionString,
       ssl: {
         rejectUnauthorized: false
       }
     });
+    
+    // #region agent log
+    console.log('[db.js] Database pool created successfully');
+    // #endregion
   }
   return pool;
 }

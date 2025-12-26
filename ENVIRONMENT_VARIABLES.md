@@ -12,6 +12,19 @@ You must set these in your Vercel dashboard (Settings → Environment Variables)
 |---------------|-------------|---------------|
 | `DEEPSEEK_API_KEY` | DeepSeek API key for LLM service | `sk-...` (starts with `sk-`) |
 
+### Database (Neon PostgreSQL) - Required for User/Profile Features
+
+| Variable Name | Description | Example Value |
+|---------------|-------------|---------------|
+| `DATABASE_URL` | Neon PostgreSQL connection string | `postgresql://user:pass@host/db?sslmode=require` |
+
+**How to get:**
+1. Go to your Neon dashboard (https://console.neon.tech/)
+2. Select your project
+3. Go to Connection Details
+4. Copy the connection string (use the "Pooled connection" option for serverless functions)
+5. It should look like: `postgresql://user:password@ep-xxx-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require`
+
 **How to get:**
 1. Visit https://platform.deepseek.com/
 2. Sign up or log in
@@ -162,6 +175,7 @@ If you see errors about missing configuration, double-check that:
 | Variable | Type | Required | Where to Set |
 |----------|------|----------|--------------|
 | `DEEPSEEK_API_KEY` | Serverless Function | ✅ Yes | Vercel Environment Variables |
+| `DATABASE_URL` | Serverless Function | ✅ Yes | Vercel Environment Variables |
 | `REACT_APP_FIREBASE_API_KEY` | Frontend | ✅ Yes | Vercel + Local `.env` |
 | `REACT_APP_FIREBASE_AUTH_DOMAIN` | Frontend | ✅ Yes | Vercel + Local `.env` |
 | `REACT_APP_FIREBASE_PROJECT_ID` | Frontend | ✅ Yes | Vercel + Local `.env` |
