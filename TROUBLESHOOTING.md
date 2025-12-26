@@ -34,6 +34,32 @@ Firebase: Error (auth/unauthorized-domain)
 
 **Note:** If you're testing on a Vercel preview URL, you may need to add that specific preview domain, or use the wildcard pattern if Firebase supports it.
 
+### Malformed Redirect URL (Double https://)
+
+**Error:**
+```
+Redirect URL: https://https//www.parenticai.com/login/__/auth/handler...
+```
+
+**Cause:** The `REACT_APP_FIREBASE_AUTH_DOMAIN` environment variable is incorrectly set. It should be your Firebase auth domain (e.g., `parenticai-auth.firebaseapp.com`), NOT your production domain with a protocol.
+
+**Solution:**
+1. Go to Vercel Dashboard → Settings → Environment Variables
+2. Check the value of `REACT_APP_FIREBASE_AUTH_DOMAIN`
+3. It should be: `parenticai-auth.firebaseapp.com` (or your Firebase project's auth domain)
+4. It should NOT be:
+   - `https://www.parenticai.com`
+   - `https://parenticai.com`
+   - `www.parenticai.com`
+   - Any URL with `http://` or `https://` protocol
+5. The correct format is: `your-project-id.firebaseapp.com`
+6. After fixing, redeploy your application
+
+**Important:** 
+- `REACT_APP_FIREBASE_AUTH_DOMAIN` = Your Firebase auth domain (from Firebase Console)
+- Authorized domains in Firebase Console = Your production domains where the app runs
+- These are two different things!
+
 ### 403 PERMISSION_DENIED: Installations
 
 **Error:**

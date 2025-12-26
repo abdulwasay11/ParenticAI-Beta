@@ -4,9 +4,16 @@ import { getFirestore, Firestore } from 'firebase/firestore';
 import { getAnalytics, Analytics } from 'firebase/analytics';
 
 // Firebase configuration from environment variables
+// Helper function to clean authDomain (remove protocol if present)
+const cleanAuthDomain = (domain: string): string => {
+  if (!domain) return '';
+  // Remove http:// or https:// if present
+  return domain.replace(/^https?:\/\//, '').split('/')[0];
+};
+
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY || '',
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || '',
+  authDomain: cleanAuthDomain(process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || ''),
   projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || '',
   storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || '',
   messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || '',
@@ -20,6 +27,18 @@ if (!firebaseConfig.apiKey) missingVars.push('REACT_APP_FIREBASE_API_KEY');
 if (!firebaseConfig.authDomain) missingVars.push('REACT_APP_FIREBASE_AUTH_DOMAIN');
 if (!firebaseConfig.projectId) missingVars.push('REACT_APP_FIREBASE_PROJECT_ID');
 if (!firebaseConfig.appId) missingVars.push('REACT_APP_FIREBASE_APP_ID');
+
+// Warn if authDomain looks incorrect (contains protocol or is not a Firebase domain)
+const rawAuthDomain = process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || '';
+if (rawAuthDomain && (rawAuthDomain.startsWith('http://') || rawAuthDomain.startsWith('https://'))) {
+  console.warn('⚠️ WARNING: REACT_APP_FIREBASE_AUTH_DOMAIN should not include protocol (http:// or https://)');
+  console.warn('Current value:', rawAuthDomain);
+  console.warn('Expected format: your-project.firebaseapp.com');
+}
+if (firebaseConfig.authDomain && !firebaseConfig.authDomain.includes('.firebaseapp.com') && !firebaseConfig.authDomain.includes('localhost')) {
+  console.warn('⚠️ WARNING: REACT_APP_FIREBASE_AUTH_DOMAIN should typically be your-project.firebaseapp.com');
+  console.warn('Current value:', firebaseConfig.authDomain);
+}
 
 // Check if using example/placeholder values
 if (firebaseConfig.appId === '1:123456789:web:abc123def456' || firebaseConfig.appId.includes('123456789')) {
