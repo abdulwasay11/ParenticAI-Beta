@@ -2,6 +2,10 @@
 const { query } = require('./db');
 
 module.exports = async function handler(req, res) {
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'users.js:4',message:'Handler called',data:{method:req.method,url:req.url,path:req.path,query:req.query,hasAuth:!!req.headers.authorization},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+  // #endregion
+  
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -12,6 +16,9 @@ module.exports = async function handler(req, res) {
   );
 
   if (req.method === 'OPTIONS') {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'users.js:17',message:'OPTIONS request handled',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     res.status(200).end();
     return;
   }
@@ -54,24 +61,48 @@ module.exports = async function handler(req, res) {
     if (req.method === 'GET') {
       const { firebase_uid } = req.query;
       
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'users.js:54',message:'GET request processing',data:{firebase_uid,hasFirebaseUid:!!firebase_uid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
+      
       if (!firebase_uid) {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'users.js:58',message:'Missing firebase_uid',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         return res.status(400).json({ error: 'firebase_uid is required' });
       }
 
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'users.js:61',message:'Before database query',data:{firebase_uid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
+      
       const result = await query(
         'SELECT * FROM users WHERE firebase_uid = $1',
         [firebase_uid]
       );
 
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'users.js:68',message:'After database query',data:{rowCount:result.rows.length,hasRows:result.rows.length>0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
+
       if (result.rows.length === 0) {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'users.js:70',message:'User not found in database',data:{firebase_uid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         return res.status(404).json({ error: 'User not found' });
       }
 
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'users.js:74',message:'User found, returning data',data:{userId:result.rows[0].id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       return res.status(200).json(result.rows[0]);
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/48b11a14-7742-440c-a064-d29346f95d75',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'users.js:75',message:'Error caught',data:{errorMessage:error.message,errorStack:error.stack,errorName:error.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     console.error('Error in users API:', error);
     return res.status(500).json({ 
       error: 'Internal server error',
