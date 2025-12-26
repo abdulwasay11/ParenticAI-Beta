@@ -105,6 +105,44 @@ async function initDatabase() {
       )
     `);
 
+    // Add new columns to users table (for subscription and phone)
+    await query(`
+      DO $$ 
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='phone') THEN
+          ALTER TABLE users ADD COLUMN phone VARCHAR(20);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='subscription_tier') THEN
+          ALTER TABLE users ADD COLUMN subscription_tier VARCHAR(50) DEFAULT 'free';
+        END IF;
+      END $$;
+    `);
+
+    // Add new columns to parents table (for partner info, language, photo)
+    await query(`
+      DO $$ 
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='parents' AND column_name='preferred_language') THEN
+          ALTER TABLE parents ADD COLUMN preferred_language VARCHAR(50);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='parents' AND column_name='photo_url') THEN
+          ALTER TABLE parents ADD COLUMN photo_url TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='parents' AND column_name='partner_first_name') THEN
+          ALTER TABLE parents ADD COLUMN partner_first_name VARCHAR(255);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='parents' AND column_name='partner_last_name') THEN
+          ALTER TABLE parents ADD COLUMN partner_last_name VARCHAR(255);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='parents' AND column_name='partner_email') THEN
+          ALTER TABLE parents ADD COLUMN partner_email VARCHAR(255);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='parents' AND column_name='partner_phone') THEN
+          ALTER TABLE parents ADD COLUMN partner_phone VARCHAR(20);
+        END IF;
+      END $$;
+    `);
+
     // Create indexes for better performance
     await query(`CREATE INDEX IF NOT EXISTS idx_users_firebase_uid ON users(firebase_uid)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_parents_user_id ON parents(user_id)`);

@@ -56,6 +56,31 @@ module.exports = async function handler(req, res) {
         parent_id = parentResult.rows[0].id;
       }
 
+      // Check subscription tier and child count
+      const userData = await query('SELECT subscription_tier FROM users WHERE id = $1', [userId]);
+      const subscriptionTier = userData.rows[0]?.subscription_tier || 'free';
+      
+      const childrenCountResult = await query('SELECT COUNT(*) as count FROM children WHERE parent_id = $1', [parent_id]);
+      const childrenCount = parseInt(childrenCountResult.rows[0].count) || 0;
+      
+      // Check subscription limits
+      let maxChildren = 1; // free tier
+      if (subscriptionTier === 'parent') {
+        maxChildren = 4;
+      } else if (subscriptionTier === 'family') {
+        maxChildren = 999; // effectively unlimited
+      }
+      
+      if (childrenCount >= maxChildren) {
+        return res.status(403).json({ 
+          error: 'Child limit reached',
+          message: `Your ${subscriptionTier} subscription allows up to ${maxChildren} child${maxChildren > 1 ? 'ren' : ''}. Please upgrade your subscription to add more children.`,
+          currentTier: subscriptionTier,
+          currentCount: childrenCount,
+          maxAllowed: maxChildren
+        });
+      }
+
       const result = await query(
         `INSERT INTO children (parent_id, name, age, gender, hobbies, interests, personality_traits,
                               special_needs, school_grade, studies, ethnicity, height_cm, weight_kg,

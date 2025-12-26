@@ -9,6 +9,7 @@ import LandingPage from './LandingPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
+import AccountSettingsPage from './pages/AccountSettingsPage';
 import ChildrenPage from './pages/ChildrenPage';
 import ChatPage from './pages/ChatPage';
 import CommunityPage from './pages/CommunityPage';
@@ -194,6 +195,16 @@ const App: React.FC = () => {
                   <ProtectedRoute>
                     <Layout>
                       <ProfilePage />
+                    </Layout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/account-settings" 
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <AccountSettingsPage />
                     </Layout>
                   </ProtectedRoute>
                 } 

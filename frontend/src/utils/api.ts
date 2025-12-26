@@ -30,6 +30,8 @@ export interface User {
   username?: string;
   first_name?: string;
   last_name?: string;
+  phone?: string;
+  subscription_tier?: 'free' | 'parent' | 'family';
   created_at: string;
   updated_at?: string;
 }
@@ -43,7 +45,13 @@ export interface Parent {
   concerns?: string;
   goals?: string;
   experience_level?: string;
-  family_structure?: string;
+  family_structure?: 'single' | 'couple';
+  preferred_language?: string;
+  photo_url?: string;
+  partner_first_name?: string;
+  partner_last_name?: string;
+  partner_email?: string;
+  partner_phone?: string;
   parenting_score?: number;
   improvement_areas?: string[];
   strengths?: string[];
@@ -116,6 +124,23 @@ export const api = {
     return response.json();
   },
 
+  async updateUser(userData: {
+    email?: string;
+    phone?: string;
+    subscription_tier?: 'free' | 'parent' | 'family';
+  }, firebaseUid: string, token?: string | null): Promise<User> {
+    const response = await fetch(getApiUrl('users'), {
+      method: 'PUT',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ ...userData, firebase_uid: firebaseUid }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to update user');
+    }
+    return response.json();
+  },
+
   // Parent profile management
   async createParentProfile(parentData: {
     age?: number;
@@ -124,7 +149,13 @@ export const api = {
     concerns?: string;
     goals?: string;
     experience_level?: string;
-    family_structure?: string;
+    family_structure?: 'single' | 'couple';
+    preferred_language?: string;
+    photo_url?: string;
+    partner_first_name?: string;
+    partner_last_name?: string;
+    partner_email?: string;
+    partner_phone?: string;
   }, firebaseUid: string, token?: string | null): Promise<Parent> {
     const response = await fetch(getApiUrl('parents'), {
       method: 'POST',
@@ -156,7 +187,13 @@ export const api = {
     concerns?: string;
     goals?: string;
     experience_level?: string;
-    family_structure?: string;
+    family_structure?: 'single' | 'couple';
+    preferred_language?: string;
+    photo_url?: string;
+    partner_first_name?: string;
+    partner_last_name?: string;
+    partner_email?: string;
+    partner_phone?: string;
   }, firebaseUid: string, token?: string | null): Promise<Parent> {
     const response = await fetch(getApiUrl('parents'), {
       method: 'PUT',

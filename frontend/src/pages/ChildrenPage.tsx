@@ -58,6 +58,7 @@ interface ChildFormData {
 
 const ChildrenPage: React.FC = () => {
   const { user, firebaseUser, token } = useAuth();
+  const navigate = useNavigate();
   const [children, setChildren] = useState<BackendChild[]>([]);
   const [childOptions, setChildOptions] = useState<ChildOptions | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
@@ -247,7 +248,19 @@ const ChildrenPage: React.FC = () => {
       });
     } catch (error: any) {
       console.error('Error saving child:', error);
-      showSnackbar(error.message || 'Failed to save child. Please try again.', 'error');
+      
+      // Check if it's a subscription limit error
+      if (error.message && error.message.includes('Child limit reached')) {
+        showSnackbar(error.message, 'error');
+        // Show upgrade prompt - could add a dialog here if needed
+        setTimeout(() => {
+          if (window.confirm('Would you like to upgrade your subscription to add more children?')) {
+            navigate('/account-settings');
+          }
+        }, 2000);
+      } else {
+        showSnackbar(error.message || 'Failed to save child. Please try again.', 'error');
+      }
     }
   };
 

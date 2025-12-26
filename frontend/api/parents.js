@@ -24,7 +24,11 @@ module.exports = async function handler(req, res) {
 
     if (req.method === 'POST') {
       // Create or update parent profile
-      const { firebase_uid, age, location, parenting_style, concerns, goals, experience_level, family_structure } = req.body;
+      const { 
+        firebase_uid, age, location, parenting_style, concerns, goals, experience_level, 
+        family_structure, preferred_language, photo_url,
+        partner_first_name, partner_last_name, partner_email, partner_phone
+      } = req.body;
       
       if (!firebase_uid) {
         return res.status(400).json({ error: 'firebase_uid is required' });
@@ -47,20 +51,34 @@ module.exports = async function handler(req, res) {
           `UPDATE parents 
            SET age = $1, location = $2, parenting_style = $3, concerns = $4, 
                goals = $5, experience_level = $6, family_structure = $7,
+               preferred_language = $8, photo_url = $9,
+               partner_first_name = $10, partner_last_name = $11, 
+               partner_email = $12, partner_phone = $13,
                updated_at = CURRENT_TIMESTAMP
-           WHERE user_id = $8
+           WHERE user_id = $14
            RETURNING *`,
-          [age || null, location || null, parenting_style || null, concerns || null,
-           goals || null, experience_level || null, family_structure || null, user_id]
+          [
+            age || null, location || null, parenting_style || null, concerns || null,
+            goals || null, experience_level || null, family_structure || null,
+            preferred_language || null, photo_url || null,
+            partner_first_name || null, partner_last_name || null,
+            partner_email || null, partner_phone || null,
+            user_id
+          ]
         );
       } else {
         // Create new
         result = await query(
-          `INSERT INTO parents (user_id, age, location, parenting_style, concerns, goals, experience_level, family_structure)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          `INSERT INTO parents (user_id, age, location, parenting_style, concerns, goals, experience_level, family_structure, preferred_language, photo_url, partner_first_name, partner_last_name, partner_email, partner_phone)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
            RETURNING *`,
-          [user_id, age || null, location || null, parenting_style || null, concerns || null,
-           goals || null, experience_level || null, family_structure || null]
+          [
+            user_id, age || null, location || null, parenting_style || null, concerns || null,
+            goals || null, experience_level || null, family_structure || null,
+            preferred_language || null, photo_url || null,
+            partner_first_name || null, partner_last_name || null,
+            partner_email || null, partner_phone || null
+          ]
         );
       }
 
@@ -100,7 +118,11 @@ module.exports = async function handler(req, res) {
 
     if (req.method === 'PUT') {
       // Update parent profile
-      const { firebase_uid, age, location, parenting_style, concerns, goals, experience_level, family_structure } = req.body;
+      const { 
+        firebase_uid, age, location, parenting_style, concerns, goals, experience_level, 
+        family_structure, preferred_language, photo_url,
+        partner_first_name, partner_last_name, partner_email, partner_phone
+      } = req.body;
       
       if (!firebase_uid) {
         return res.status(400).json({ error: 'firebase_uid is required' });
@@ -121,10 +143,21 @@ module.exports = async function handler(req, res) {
              goals = COALESCE($5, goals),
              experience_level = COALESCE($6, experience_level),
              family_structure = COALESCE($7, family_structure),
+             preferred_language = COALESCE($8, preferred_language),
+             photo_url = COALESCE($9, photo_url),
+             partner_first_name = COALESCE($10, partner_first_name),
+             partner_last_name = COALESCE($11, partner_last_name),
+             partner_email = COALESCE($12, partner_email),
+             partner_phone = COALESCE($13, partner_phone),
              updated_at = CURRENT_TIMESTAMP
-         WHERE user_id = $8
+         WHERE user_id = $14
          RETURNING *`,
-        [age, location, parenting_style, concerns, goals, experience_level, family_structure, user_id]
+        [
+          age, location, parenting_style, concerns, goals, experience_level, family_structure,
+          preferred_language, photo_url,
+          partner_first_name, partner_last_name, partner_email, partner_phone,
+          user_id
+        ]
       );
 
       if (result.rows.length === 0) {

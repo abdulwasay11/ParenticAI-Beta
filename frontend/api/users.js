@@ -180,6 +180,53 @@ module.exports = async function handler(req, res) {
       return res.status(200).json(result.rows[0]);
     }
 
+    if (req.method === 'PUT') {
+      // Update user information
+      const { firebase_uid, email, phone, subscription_tier } = req.body;
+      
+      if (!firebase_uid) {
+        return res.status(400).json({ error: 'firebase_uid is required' });
+      }
+
+      const updateFields = [];
+      const updateValues = [];
+      let paramIndex = 1;
+
+      if (email !== undefined) {
+        updateFields.push(`email = $${paramIndex++}`);
+        updateValues.push(email);
+      }
+      if (phone !== undefined) {
+        updateFields.push(`phone = $${paramIndex++}`);
+        updateValues.push(phone);
+      }
+      if (subscription_tier !== undefined) {
+        updateFields.push(`subscription_tier = $${paramIndex++}`);
+        updateValues.push(subscription_tier);
+      }
+
+      if (updateFields.length === 0) {
+        return res.status(400).json({ error: 'No fields to update' });
+      }
+
+      updateFields.push(`updated_at = CURRENT_TIMESTAMP`);
+      updateValues.push(firebase_uid);
+
+      const result = await query(
+        `UPDATE users 
+         SET ${updateFields.join(', ')}
+         WHERE firebase_uid = $${paramIndex}
+         RETURNING *`,
+        updateValues
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      return res.status(200).json(result.rows[0]);
+    }
+
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
     // #region agent log

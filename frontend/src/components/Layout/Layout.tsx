@@ -26,6 +26,7 @@ import {
   History,
   Menu as MenuIcon,
   Logout,
+  Settings,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -46,6 +47,7 @@ const drawerWidth = 240;
 const menuItems: MenuItem[] = [
   { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
   { text: 'Profile', icon: <Person />, path: '/profile' },
+  { text: 'Account Settings', icon: <Settings />, path: '/account-settings' },
   { text: 'Children', icon: <ChildCare />, path: '/children' },
   { text: 'AI Chat', icon: <Chat />, path: '/chat' },
   { text: 'Community', icon: <People />, path: '/community' },
