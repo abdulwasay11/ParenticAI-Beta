@@ -64,7 +64,7 @@ module.exports = async function handler(req, res) {
       const childrenCount = parseInt(childrenCountResult.rows[0].count) || 0;
       
       // Check subscription limits
-      let maxChildren = 1; // free tier
+      let maxChildren = 2; // free tier: sample child + 1 additional
       if (subscriptionTier === 'parent') {
         maxChildren = 4;
       } else if (subscriptionTier === 'family') {

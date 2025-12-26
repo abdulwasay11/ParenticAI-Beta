@@ -25,6 +25,7 @@ import {
 import { ChildCare, Add, Edit, Delete } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { api, Child as BackendChild, ChildOptions } from '../utils/api';
+import { useNavigate } from 'react-router-dom';
 
 // TypeScript interfaces
 interface Child {

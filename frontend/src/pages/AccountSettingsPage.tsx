@@ -36,10 +36,10 @@ interface UserAccount {
 const SUBSCRIPTION_TIERS = {
   free: {
     name: 'Free',
-    childrenLimit: 1,
+    childrenLimit: 2,
     price: '$0',
     features: [
-      '1 child profile',
+      '2 child profiles (sample + 1 additional)',
       'Basic AI chat',
       'Parent profile',
       'Dashboard insights'
