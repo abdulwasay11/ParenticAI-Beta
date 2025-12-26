@@ -17,15 +17,17 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    // Get Firebase UID from Authorization header
+    // For GET requests, allow querying by firebase_uid from query string
+    // For POST and other methods, require Authorization header
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    let token = null;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split('Bearer ')[1];
+    } else if (req.method !== 'GET') {
+      // Require auth for POST, PUT, DELETE, etc.
       return res.status(401).json({ error: 'Unauthorized' });
     }
-
-    const token = authHeader.split('Bearer ')[1];
-    // In production, verify the Firebase token here
-    // For now, we'll extract user ID from request body or query
 
     if (req.method === 'POST') {
       // Create user
