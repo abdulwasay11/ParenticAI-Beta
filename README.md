@@ -2,6 +2,7 @@
 
 ParenticAI is a frontend-only web application that provides AI-powered parenting assistance through an intelligent chat interface. Built with React, TypeScript, Material-UI, Firebase Authentication, and DeepSeek API integration.
 
+
 ## 🚀 Features
 
 - **🔐 Secure Authentication**: Firebase Authentication for secure user management
