@@ -51,14 +51,14 @@ const FormattedMessage: React.FC<FormattedMessageProps> = ({ text, variant = 'bo
         );
       }
       // Check if it's a bullet list
-      else if (/^[•\-\*]/.test(paragraphText.trim())) {
+      else if (/^[•*-]/.test(paragraphText.trim())) {
         const listLines = paragraphText.split('\n');
         elements.push(
           <Box key={keyIndex++} sx={{ mb: 1 }}>
             {listLines.map((line, lineIndex) => {
               const trimmedLine = line.trim();
-              if (/^[•\-\*]/.test(trimmedLine)) {
-                const content = trimmedLine.replace(/^[•\-\*]\s*/, '');
+              if (/^[•*-]/.test(trimmedLine)) {
+                const content = trimmedLine.replace(/^[•*-]\s*/, '');
                 return (
                   <Box key={lineIndex} sx={{ display: 'flex', mb: 0.5 }}>
                     <Typography variant={variant} component="span" sx={{ mr: 1 }}>

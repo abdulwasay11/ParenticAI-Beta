@@ -54,7 +54,7 @@ const LANGUAGES = [
 ];
 
 const ProfilePage: React.FC = () => {
-  const { user, firebaseUser, token } = useAuth();
+  const { firebaseUser, token } = useAuth();
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -85,7 +85,7 @@ const ProfilePage: React.FC = () => {
         lastName: lastName || prev.lastName || '',
       }));
     }
-  }, [firebaseUser]);
+  }, [firebaseUser, profile.email]);
 
   // Load profile data from API
   useEffect(() => {

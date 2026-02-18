@@ -7,14 +7,13 @@ import {
   Stack,
   Avatar,
   Chip,
-  Button,
   TextField,
   InputAdornment,
   Accordion,
   AccordionSummary,
   AccordionDetails
 } from '@mui/material';
-import { Psychology, Person, Search, ExpandMore, FilterList } from '@mui/icons-material';
+import { Psychology, Person, Search, ExpandMore } from '@mui/icons-material';
 
 // TypeScript interfaces
 interface ChatSession {

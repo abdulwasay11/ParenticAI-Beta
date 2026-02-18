@@ -11,14 +11,12 @@ import {
   GoogleAuthProvider,
   RecaptchaVerifier,
   signInWithPhoneNumber,
-  PhoneAuthProvider,
-  signInWithCredential,
   ConfirmationResult
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import axios from 'axios';
-import { api, User as BackendUser } from '../utils/api';
+import { api } from '../utils/api';
 
 // Types
 interface User {

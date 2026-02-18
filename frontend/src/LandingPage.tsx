@@ -28,7 +28,6 @@ import {
   Stop,
   Close,
 } from '@mui/icons-material';
-import { useAuth } from './contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import FormattedMessage from './components/Common/FormattedMessage';
 import { api } from './utils/api';

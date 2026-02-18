@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Typography, 
   Box, 
@@ -24,24 +24,8 @@ import {
 } from '@mui/material';
 import { ChildCare, Add, Edit, Delete } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
-import { api, Child as BackendChild, ChildOptions } from '../utils/api';
+import { api, Child as BackendChild } from '../utils/api';
 import { useNavigate } from 'react-router-dom';
-
-// TypeScript interfaces
-interface Child {
-  id: string;
-  name: string;
-  age: number;
-  gender: 'Male' | 'Female' | 'Other';
-  hobbies: string[];
-  interests: string[];
-  personality: string[];
-  schoolGrade: string;
-  studies: string[];
-  ethnicity: string;
-  heightCm: number | null;
-  weightKg: number | null;
-}
 
 interface ChildFormData {
   name: string;
@@ -58,14 +42,11 @@ interface ChildFormData {
 }
 
 const ChildrenPage: React.FC = () => {
-  const { user, firebaseUser, token } = useAuth();
+  const { firebaseUser, token } = useAuth();
   const navigate = useNavigate();
   const [children, setChildren] = useState<BackendChild[]>([]);
-  const [childOptions, setChildOptions] = useState<ChildOptions | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const [editingChild, setEditingChild] = useState<BackendChild | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
     message: '',
@@ -85,6 +66,10 @@ const ChildrenPage: React.FC = () => {
     heightCm: '',
     weightKg: '',
   });
+
+  const showSnackbar = useCallback((message: string, severity: 'success' | 'error') => {
+    setSnackbar({ open: true, message, severity });
+  }, []);
 
   // Predefined options
   const hobbyOptions: string[] = [
@@ -121,23 +106,15 @@ const ChildrenPage: React.FC = () => {
       if (!firebaseUser?.uid || !token) return;
       
       try {
-        setIsLoading(true);
-        setError(null);
+        
         
         // Load child options
         try {
           const options = await api.getChildOptions();
-          setChildOptions(options);
+          void options;
         } catch (err) {
           console.warn('Could not load child options:', err);
           // Use default options if API fails
-          setChildOptions({
-            hobbies: hobbyOptions,
-            interests: interestOptions,
-            personality_traits: personalityOptions,
-            genders: ['Male', 'Female', 'Other'],
-            school_grades: gradeOptions,
-          });
         }
         
         // Load children
@@ -145,18 +122,13 @@ const ChildrenPage: React.FC = () => {
         setChildren(childrenData);
       } catch (err: any) {
         console.error('Error loading children data:', err);
-        setError(err.message || 'Failed to load children data. Please try again.');
+        showSnackbar(err.message || 'Failed to load children data. Please try again.', 'error');
       } finally {
-        setIsLoading(false);
       }
     };
 
     loadData();
-  }, [firebaseUser?.uid, token]);
-
-  const showSnackbar = (message: string, severity: 'success' | 'error') => {
-    setSnackbar({ open: true, message, severity });
-  };
+  }, [firebaseUser?.uid, token, showSnackbar]);
 
   const ethnicityOptions: string[] = [
     'African American', 'Asian', 'Caucasian', 'Hispanic/Latino', 'Native American', 

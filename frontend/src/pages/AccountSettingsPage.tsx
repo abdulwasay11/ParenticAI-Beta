@@ -25,7 +25,7 @@ import {
 import { Save, Upgrade, CheckCircle } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
-import { useNavigate } from 'react-router-dom';
+ 
 
 interface UserAccount {
   email: string;
@@ -75,7 +75,6 @@ const SUBSCRIPTION_TIERS = {
 
 const AccountSettingsPage: React.FC = () => {
   const { firebaseUser, token } = useAuth();
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);

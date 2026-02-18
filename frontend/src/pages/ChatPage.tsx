@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   Typography, 
   Box, 
@@ -22,7 +22,6 @@ import {
   AttachFile, 
   Mic, 
   Stop,
-  Image as ImageIcon,
   Close
 } from '@mui/icons-material';
 import FormattedMessage from '../components/Common/FormattedMessage';
@@ -68,6 +67,7 @@ const ChatPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const childrenRef = useRef<Child[]>([]);
 
   const quickQuestions: string[] = [
     'How do I handle tantrums?',
@@ -95,6 +95,36 @@ const ChatPage: React.FC = () => {
     }
   }, [messages, streamingMessageId]);
 
+  useEffect(() => {
+    childrenRef.current = children;
+  }, [children]);
+
+  // Create sample child for new users (only if no children exist and no sample child already exists)
+  const createSampleChild = useCallback(async () => {
+    if (!firebaseUser?.uid || !token) return;
+
+    // Check if a sample child already exists
+    const hasSampleChild = childrenRef.current.some(c => c.name === 'Sample Child');
+    if (hasSampleChild) return;
+
+    try {
+      const sampleChild = await api.createChild({
+        name: 'Sample Child',
+        age: 5,
+        gender: 'Other',
+        hobbies: ['Reading', 'Drawing'],
+        interests: ['Science', 'Art'],
+        personality_traits: ['Curious', 'Creative'],
+        school_grade: 'Kindergarten',
+      }, firebaseUser.uid, token);
+
+      setChildren(prev => [...prev, sampleChild]);
+      setSelectedChildId(sampleChild.id.toString());
+    } catch (error) {
+      console.error('Error creating sample child:', error);
+    }
+  }, [firebaseUser?.uid, token]);
+
   // Load children on mount
   useEffect(() => {
     const loadChildren = async () => {
@@ -117,7 +147,7 @@ const ChatPage: React.FC = () => {
     };
     
     loadChildren();
-  }, [firebaseUser, token]);
+  }, [firebaseUser, token, createSampleChild]);
 
   // Load chat history when child selection changes (only after children are loaded)
   useEffect(() => {
@@ -171,32 +201,6 @@ const ChatPage: React.FC = () => {
     
     loadHistory();
   }, [firebaseUser, token, selectedChildId, children, loadingChildren]);
-
-  // Create sample child for new users (only if no children exist and no sample child already exists)
-  const createSampleChild = async () => {
-    if (!firebaseUser?.uid || !token) return;
-    
-    // Check if a sample child already exists
-    const hasSampleChild = children.some(c => c.name === 'Sample Child');
-    if (hasSampleChild) return;
-    
-    try {
-      const sampleChild = await api.createChild({
-        name: 'Sample Child',
-        age: 5,
-        gender: 'Other',
-        hobbies: ['Reading', 'Drawing'],
-        interests: ['Science', 'Art'],
-        personality_traits: ['Curious', 'Creative'],
-        school_grade: 'Kindergarten',
-      }, firebaseUser.uid, token);
-      
-      setChildren(prev => [...prev, sampleChild]);
-      setSelectedChildId(sampleChild.id.toString());
-    } catch (error) {
-      console.error('Error creating sample child:', error);
-    }
-  };
 
   // Format child data as context for AI
   const formatChildContext = (child: Child | null): string[] => {
