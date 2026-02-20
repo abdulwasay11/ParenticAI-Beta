@@ -17,7 +17,7 @@ const firebaseConfig = {
   projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || '',
   storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || '',
   messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: process.env.REACT_APP_FIREBASE_APP_ID || '',
+  appId: process.env.FIREBASE_APP_ID || '',
   measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID || ''
 };
 
@@ -26,7 +26,7 @@ const missingVars: string[] = [];
 if (!firebaseConfig.apiKey) missingVars.push('REACT_APP_FIREBASE_API_KEY');
 if (!firebaseConfig.authDomain) missingVars.push('REACT_APP_FIREBASE_AUTH_DOMAIN');
 if (!firebaseConfig.projectId) missingVars.push('REACT_APP_FIREBASE_PROJECT_ID');
-if (!firebaseConfig.appId) missingVars.push('REACT_APP_FIREBASE_APP_ID');
+if (!firebaseConfig.appId) missingVars.push('FIREBASE_APP_ID');
 
 // Warn if authDomain looks incorrect (contains protocol or is not a Firebase domain)
 const rawAuthDomain = process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || '';
@@ -43,8 +43,8 @@ if (firebaseConfig.authDomain && !firebaseConfig.authDomain.includes('.firebasea
 // Check if using example/placeholder values
 if (firebaseConfig.appId === '1:123456789:web:abc123def456' || firebaseConfig.appId.includes('123456789')) {
   console.error('⚠️ WARNING: Firebase App ID appears to be using example/placeholder value.');
-  console.error('Please set REACT_APP_FIREBASE_APP_ID to your actual Firebase App ID from Firebase Console.');
-  missingVars.push('REACT_APP_FIREBASE_APP_ID (currently using placeholder)');
+  console.error('Please set FIREBASE_APP_ID to your actual Firebase App ID from Firebase Console.');
+  missingVars.push('FIREBASE_APP_ID (currently using placeholder)');
 }
 
 if (missingVars.length > 0) {
